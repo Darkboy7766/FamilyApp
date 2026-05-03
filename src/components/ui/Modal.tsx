@@ -13,24 +13,20 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-      padding: '1rem'
-    }} onClick={onClose}>
-      <div 
-        className="glass-panel animate-fade-in" 
-        style={{ width: '100%', maxWidth: '500px', display: 'flex', flexDirection: 'column', background: 'var(--bg-color)', border: '1px solid var(--panel-border)', maxHeight: '90vh', overflowY: 'auto' }}
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex-between" style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--panel-border)' }}>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="modal-handle" />
+        <div className="flex-between" style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--panel-border)', flexShrink: 0 }}>
           <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{title}</h3>
-          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex' }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', padding: '4px', borderRadius: '8px', minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
+          >
             <X size={20} />
           </button>
         </div>
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto' }}>
           {children}
         </div>
       </div>
