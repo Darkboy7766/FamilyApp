@@ -4,7 +4,7 @@ import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import { useData } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
-import type { FamilyRole } from '../types';
+import type { FamilyRole, ExpenseCategory } from '../types';
 import { EXPENSE_CATEGORIES } from '../types';
 
 export type EditData =
@@ -42,7 +42,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
   const [taskDueDate, setTaskDueDate] = useState('');
   const [taskPerson, setTaskPerson] = useState('');
   const [expenseAmount, setExpenseAmount]     = useState('');
-  const [expenseCategory, setExpenseCategory] = useState(EXPENSE_CATEGORIES[0]);
+  const [expenseCategory, setExpenseCategory] = useState<ExpenseCategory>(EXPENSE_CATEGORIES[0]);
   const [expenseDate, setExpenseDate]         = useState('');
   const [expensePaidBy, setExpensePaidBy]     = useState('');
 
