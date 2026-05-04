@@ -5,12 +5,14 @@ import { Button } from './ui/Button';
 import { useData } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
 import type { FamilyRole } from '../types';
+import { EXPENSE_CATEGORIES } from '../types';
 
 export type EditData =
   | { tab: 'person';  id: string; name: string; phone: string; role?: FamilyRole }
   | { tab: 'event';   id: string; eventType: string; eventDate: string; eventPersonId: string }
   | { tab: 'routine'; id: string; medication: string; time: string; routinePersonId: string }
-  | { tab: 'task';    id: string; title: string; dueDate: string; taskPersonId: string };
+  | { tab: 'task';    id: string; title: string; dueDate: string; taskPersonId: string }
+  | { tab: 'expense'; id: string; amount: number; category: string; date: string; paidById: string };
 
 const ROLES: FamilyRole[] = ['Майка', 'Баща', 'Дете', 'Баба', 'Дядо', 'Брат', 'Сестра'];
 
@@ -22,11 +24,11 @@ interface Props {
 
 export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }) => {
   const isEdit = !!editData;
-  const { people, addPerson, addEvent, addRoutine, addTask, updatePerson, updateEvent, updateRoutine, updateTask } = useData();
+  const { people, addPerson, addEvent, addRoutine, addTask, addExpense, updatePerson, updateEvent, updateRoutine, updateTask, updateExpense } = useData();
   const { addToast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  const [tab, setTab]               = useState<'person' | 'event' | 'routine' | 'task'>('person');
+  const [tab, setTab]               = useState<'person' | 'event' | 'routine' | 'task' | 'expense'>('person');
   const [name, setName]             = useState('');
   const [phone, setPhone]           = useState('');
   const [role, setRole]             = useState<FamilyRole | ''>('');
@@ -39,6 +41,10 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
   const [taskTitle, setTaskTitle]   = useState('');
   const [taskDueDate, setTaskDueDate] = useState('');
   const [taskPerson, setTaskPerson] = useState('');
+  const [expenseAmount, setExpenseAmount]     = useState('');
+  const [expenseCategory, setExpenseCategory] = useState(EXPENSE_CATEGORIES[0]);
+  const [expenseDate, setExpenseDate]         = useState('');
+  const [expensePaidBy, setExpensePaidBy]     = useState('');
 
   // Sync form with editData whenever the modal opens
   useEffect(() => {
@@ -61,6 +67,11 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
         setTaskTitle(editData.title);
         setTaskDueDate(editData.dueDate);
         setTaskPerson(editData.taskPersonId);
+      } else if (editData.tab === 'expense') {
+        setExpenseAmount(String(editData.amount));
+        setExpenseCategory(editData.category as typeof EXPENSE_CATEGORIES[number]);
+        setExpenseDate(editData.date);
+        setExpensePaidBy(editData.paidById);
       }
     } else {
       setTab('person');
@@ -68,6 +79,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
       setEventType('🎂 Рожден ден'); setEventDate(''); setEventPerson('');
       setMedication(''); setTime(''); setRoutinePerson('');
       setTaskTitle(''); setTaskDueDate(''); setTaskPerson('');
+      setExpenseAmount(''); setExpenseCategory(EXPENSE_CATEGORIES[0]); setExpenseDate(''); setExpensePaidBy('');
     }
   }, [isOpen, editData]);
 
@@ -90,11 +102,16 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
       success = isEdit
         ? await updateRoutine(editData!.id, payload)
         : await addRoutine(payload);
-    } else {
+    } else if (tab === 'task') {
       const payload = { title: taskTitle, dueDate: taskDueDate || undefined, personIds: taskPerson ? [taskPerson] : [] };
       success = isEdit
         ? await updateTask(editData!.id, payload)
         : await addTask(payload);
+    } else {
+      const payload = { amount: parseFloat(expenseAmount) || 0, category: expenseCategory, date: expenseDate, paidById: expensePaidBy || undefined };
+      success = isEdit
+        ? await updateExpense(editData!.id, payload)
+        : await addExpense(payload);
     }
 
     setLoading(false);
@@ -121,15 +138,15 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
     <Modal isOpen={isOpen} onClose={onClose} title={isEdit ? 'Редактиране' : 'Добавяне на нов запис'}>
       {/* Tab switcher — hidden in edit mode since tab is fixed */}
       {!isEdit && (
-        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-color)', padding: '6px', borderRadius: '14px' }}>
-          {(['person', 'event', 'routine', 'task'] as const).map(t => (
+        <div style={{ display: 'flex', gap: '0.4rem', background: 'var(--bg-color)', padding: '6px', borderRadius: '14px', flexWrap: 'wrap' }}>
+          {(['person', 'event', 'routine', 'task', 'expense'] as const).map(t => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              style={{ flex: 1, padding: '10px', border: 'none', background: tab === t ? 'var(--accent-color)' : 'transparent', color: tab === t ? '#fff' : 'var(--text-secondary)', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, transition: 'var(--transition)' }}
+              style={{ flex: 1, minWidth: 0, padding: '8px 4px', border: 'none', background: tab === t ? 'var(--accent-color)' : 'transparent', color: tab === t ? '#fff' : 'var(--text-secondary)', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', transition: 'var(--transition)' }}
             >
-              {t === 'person' ? 'Човек' : t === 'event' ? 'Събитие' : t === 'routine' ? 'Рутина' : 'Задача'}
+              {t === 'person' ? 'Човек' : t === 'event' ? 'Събитие' : t === 'routine' ? 'Рутина' : t === 'task' ? 'Задача' : 'Разход'}
             </button>
           ))}
         </div>
@@ -186,6 +203,26 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
               <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>За кого (незадължително)</label>
               <select style={selectStyle} value={taskPerson} onChange={e => setTaskPerson(e.target.value)}>
                 <option value="">-- Всички --</option>
+                {people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {tab === 'expense' && (
+          <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <Input label="Сума (лв.)" type="number" inputMode="decimal" min="0" step="0.01" value={expenseAmount} onChange={e => setExpenseAmount(e.target.value)} required placeholder="Пр: 25.50" />
+            <div>
+              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>Категория</label>
+              <select style={selectStyle} value={expenseCategory} onChange={e => setExpenseCategory(e.target.value as typeof EXPENSE_CATEGORIES[number])}>
+                {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <Input label="Дата" type="date" value={expenseDate} onChange={e => setExpenseDate(e.target.value)} required />
+            <div>
+              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>Платил (незадължително)</label>
+              <select style={selectStyle} value={expensePaidBy} onChange={e => setExpensePaidBy(e.target.value)}>
+                <option value="">-- Не е посочено --</option>
                 {people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>

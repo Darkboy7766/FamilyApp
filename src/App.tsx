@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Users, LayoutDashboard, HeartPulse, Plus, CheckSquare } from 'lucide-react';
+import { Users, LayoutDashboard, HeartPulse, Plus, CheckSquare, Wallet, Calendar as CalendarIcon } from 'lucide-react';
 import { Dashboard } from './pages/Dashboard';
 import { Contacts } from './pages/Contacts';
 import { Tasks } from './pages/Tasks';
+import { Budget } from './pages/Budget';
+import { Calendar } from './pages/Calendar';
 import { useReminders } from './hooks/useReminders';
 import { CreateEntityModal } from './components/CreateEntityModal';
 
@@ -53,6 +55,8 @@ function AppContent() {
           <Link to="/" style={desktopNavStyle('/')}><LayoutDashboard size={18} />Табло</Link>
           <Link to="/tasks" style={desktopNavStyle('/tasks')}><CheckSquare size={18} />Задачи</Link>
           <Link to="/contacts" style={desktopNavStyle('/contacts')}><Users size={18} />Хора</Link>
+          <Link to="/calendar" style={desktopNavStyle('/calendar')}><CalendarIcon size={18} />Календар</Link>
+          <Link to="/budget" style={desktopNavStyle('/budget')}><Wallet size={18} />Бюджет</Link>
         </nav>
       </header>
 
@@ -62,6 +66,8 @@ function AppContent() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/contacts" element={<Contacts />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/budget" element={<Budget />} />
           <Route path="*" element={<div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Страницата не е намерена.</div>} />
         </Routes>
       </main>
@@ -88,6 +94,14 @@ function AppContent() {
         <Link to="/contacts" className={`bottom-nav-item${isActive('/contacts') ? ' active' : ''}`}>
           <Users size={22} />
           Хора
+        </Link>
+        <Link to="/calendar" className={`bottom-nav-item${isActive('/calendar') ? ' active' : ''}`}>
+          <CalendarIcon size={22} />
+          Календар
+        </Link>
+        <Link to="/budget" className={`bottom-nav-item${isActive('/budget') ? ' active' : ''}`}>
+          <Wallet size={22} />
+          Бюджет
         </Link>
       </nav>
 

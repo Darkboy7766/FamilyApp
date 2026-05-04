@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'app-icon.svg'],
+      includeAssets: ['favicon.svg', 'app-icon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Family CRM',
         short_name: 'Family CRM',
@@ -19,8 +19,9 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         icons: [
+          { src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
+          { src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png', purpose: 'maskable' },
           { src: '/app-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-          { src: '/app-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
         ],
       },
       workbox: {

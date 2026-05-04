@@ -29,3 +29,14 @@ export interface Task {
   dueDate?: string;   // YYYY-MM-DD
   personIds?: string[];
 }
+
+export const EXPENSE_CATEGORIES = ['Храна', 'Сметки', 'Здраве', 'Транспорт', 'Развлечение', 'Друго'] as const;
+export type ExpenseCategory = typeof EXPENSE_CATEGORIES[number];
+
+export interface Expense {
+  id: string;
+  amount: number;
+  category: string;
+  date: string;       // YYYY-MM-DD
+  paidById?: string;  // Person id
+}

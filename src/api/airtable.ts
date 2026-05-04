@@ -1,4 +1,4 @@
-import type { Person, EventRecord, Routine, Task, FamilyRole } from '../types';
+import type { Person, EventRecord, Routine, Task, Expense, FamilyRole } from '../types';
 
 const getUrl = (tableName: string) => `/api/airtable/${encodeURIComponent(tableName)}`;
 
@@ -198,6 +198,69 @@ export const airtableApi = {
   deleteTask: async (id: string): Promise<boolean> => {
     try {
       const res = await fetch(`/api/airtable/${encodeURIComponent('Задачи')}/${id}`, { method: 'DELETE', headers });
+      return res.ok;
+    } catch (e) { console.error(e); return false; }
+  },
+
+  uploadPersonPhoto: async (personId: string, file: File): Promise<string | null> => {
+    try {
+      // Step 1: upload file, get new attachment id
+      const form = new FormData();
+      form.append('file', file, file.name);
+      form.append('filename', file.name);
+      const uploadRes = await fetch(`/api/upload-photo/${personId}`, { method: 'POST', body: form });
+      if (!uploadRes.ok) { console.error(await uploadRes.json()); return null; }
+      const attachment = await uploadRes.json();
+
+      // Step 2: patch record to keep only this attachment (replace old photo)
+      const patchRes = await fetch(`/api/airtable/${encodeURIComponent('Хора')}/${personId}`, {
+        method: 'PATCH', headers,
+        body: JSON.stringify({ fields: { 'Снимка': [{ id: attachment.id }] } }),
+      });
+      if (!patchRes.ok) { console.error(await patchRes.json()); return null; }
+      return attachment.url ?? null;
+    } catch (e) { console.error(e); return null; }
+  },
+
+  fetchExpenses: async (): Promise<Expense[]> => {
+    try {
+      const records = await fetchAllRecords('Разходи');
+      return records.map((r: any) => ({
+        id: r.id,
+        amount: r.fields['Сума'] ?? 0,
+        category: r.fields['Категория'] || 'Друго',
+        date: r.fields['Дата'] || '',
+        paidById: Array.isArray(r.fields['Платил']) ? r.fields['Платил'][0] : undefined,
+      }));
+    } catch (e) { console.error(e); return []; }
+  },
+
+  createExpense: async (data: Partial<Expense>): Promise<Expense | null> => {
+    try {
+      const res = await fetch(getUrl('Разходи'), {
+        method: 'POST', headers,
+        body: JSON.stringify({ records: [{ fields: cleanFields({ 'Сума': data.amount, 'Категория': data.category, 'Дата': data.date, 'Платил': data.paidById ? [data.paidById] : undefined }) }], typecast: true }),
+      });
+      if (!res.ok) { console.error(await res.json()); return null; }
+      const r = (await res.json()).records[0];
+      return { id: r.id, amount: r.fields['Сума'] ?? data.amount ?? 0, category: r.fields['Категория'] || data.category || 'Друго', date: r.fields['Дата'] || data.date || '', paidById: Array.isArray(r.fields['Платил']) ? r.fields['Платил'][0] : data.paidById };
+    } catch (e) { console.error(e); return null; }
+  },
+
+  updateExpense: async (id: string, data: Partial<Expense>): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/airtable/${encodeURIComponent('Разходи')}/${id}`, {
+        method: 'PATCH', headers,
+        body: JSON.stringify({ fields: cleanFields({ 'Сума': data.amount, 'Категория': data.category, 'Дата': data.date, 'Платил': data.paidById ? [data.paidById] : undefined }) }),
+      });
+      if (!res.ok) console.error(await res.json());
+      return res.ok;
+    } catch (e) { console.error(e); return false; }
+  },
+
+  deleteExpense: async (id: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/airtable/${encodeURIComponent('Разходи')}/${id}`, { method: 'DELETE', headers });
       return res.ok;
     } catch (e) { console.error(e); return false; }
   },

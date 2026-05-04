@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useData } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
 import { Card } from '../components/ui/Card';
-import { User, Trash2, Pencil, Search } from 'lucide-react';
+import { User, Trash2, Pencil, Search, Camera } from 'lucide-react';
 import type { Person, EventRecord, Routine, FamilyRole } from '../types';
 import { CreateEntityModal } from '../components/CreateEntityModal';
 import type { EditData } from '../components/CreateEntityModal';
+import { airtableApi } from '../api/airtable';
 
 const ROLE_COLORS: Record<FamilyRole, { bg: string; color: string }> = {
   'Майка':  { bg: '#fce7f3', color: '#be185d' },
@@ -18,11 +19,36 @@ const ROLE_COLORS: Record<FamilyRole, { bg: string; color: string }> = {
 };
 
 export const Contacts: React.FC = () => {
-  const { people, loading, deletePerson } = useData();
+  const { people, loading, deletePerson, refreshData } = useData();
   const { addToast } = useToast();
   const [selectedPerson, setSelectedPerson] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [editData, setEditData] = useState<EditData | undefined>();
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadTargetId = useRef<string | null>(null);
+
+  const triggerUpload = (personId: string) => {
+    uploadTargetId.current = personId;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const personId = uploadTargetId.current;
+    e.target.value = '';
+    if (!file || !personId) return;
+    setUploadingId(personId);
+    const url = await airtableApi.uploadPersonPhoto(personId, file);
+    if (url) {
+      await refreshData();
+      addToast('Снимката е качена!', 'success');
+    } else {
+      addToast('Грешка при качване на снимка.', 'error');
+    }
+    setUploadingId(null);
+    uploadTargetId.current = null;
+  };
 
   if (loading) return <div className="animate-fade-in" style={{ padding: '2rem', textAlign: 'center' }}>Зареждане на данни...</div>;
 
@@ -57,8 +83,22 @@ export const Contacts: React.FC = () => {
           <Card key={person.id} style={{ cursor: 'pointer', transition: 'transform 0.2s', transform: selectedPerson === person.id ? 'scale(1.02)' : 'none', border: selectedPerson === person.id ? '1px solid var(--accent-color)' : '' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <div onClick={() => setSelectedPerson(person.id === selectedPerson ? null : person.id)} style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--panel-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-                  {person.photoUrl ? <img src={person.photoUrl} alt={person.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User size={28} color="var(--text-secondary)" />}
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--panel-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    {uploadingId === person.id
+                      ? <div style={{ width: 24, height: 24, borderRadius: '50%', border: '3px solid var(--accent-color)', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+                      : person.photoUrl
+                        ? <img src={person.photoUrl} alt={person.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <User size={28} color="var(--text-secondary)" />
+                    }
+                  </div>
+                  <button
+                    onClick={ev => { ev.stopPropagation(); triggerUpload(person.id); }}
+                    title="Качи снимка"
+                    style={{ position: 'absolute', bottom: -2, right: -2, width: 22, height: 22, borderRadius: '50%', background: 'var(--accent-color)', border: '2px solid var(--panel-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                  >
+                    <Camera size={11} color="#fff" />
+                  </button>
                 </div>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -99,11 +139,21 @@ export const Contacts: React.FC = () => {
         <PersonDetail personId={selectedPerson} onEdit={setEditData} />
       )}
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+
       <CreateEntityModal
         isOpen={!!editData}
         onClose={() => setEditData(undefined)}
         editData={editData}
       />
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

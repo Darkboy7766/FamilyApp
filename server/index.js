@@ -17,6 +17,25 @@ if (!PAT || !BASE_ID) {
 const app = express();
 app.use(express.json());
 
+// Direct file upload → Airtable Content API (must be before express.json routes)
+app.post('/api/upload-photo/:recordId', express.raw({ type: 'multipart/*', limit: '10mb' }), async (req, res) => {
+  const { recordId } = req.params;
+  const contentType = req.headers['content-type'];
+  const url = `https://content.airtable.com/v0/${BASE_ID}/${recordId}/${encodeURIComponent('Снимка')}/uploadAttachment`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${PAT}`, 'Content-Type': contentType },
+      body: req.body,
+    });
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (err) {
+    console.error('Upload proxy грешка:', err);
+    res.status(500).json({ error: 'Upload proxy error' });
+  }
+});
+
 app.all('/api/airtable/:table/:id', async (req, res) => {
   const table = decodeURIComponent(req.params.table);
   const id = req.params.id;
