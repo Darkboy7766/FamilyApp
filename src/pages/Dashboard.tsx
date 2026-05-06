@@ -60,8 +60,6 @@ export const Dashboard: React.FC = () => {
     return ids.map(id => people.find(p => p.id === id)?.name ?? 'Някой').join(', ');
   };
 
-  const primaryUser = people[0]?.name || 'Гост';
-
   // ── Sub-components ──
   const StatCard: React.FC<{ to: string; color: string; icon: React.ReactNode; value: number | string; label: string }> =
     ({ to, color, icon, value, label }) => (
@@ -84,8 +82,7 @@ export const Dashboard: React.FC = () => {
             <User size={26} color="#f43f5e" />
           </div>
           <div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600, textTransform: 'capitalize' }}>{todayLabel}</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{primaryUser}</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'capitalize' }}>{todayLabel}</div>
           </div>
         </div>
 
