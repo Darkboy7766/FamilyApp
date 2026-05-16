@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Users, LayoutDashboard, HeartPulse, Plus, CheckSquare, Wallet, Calendar as CalendarIcon } from 'lucide-react';
+import { Users, LayoutDashboard, HeartPulse, Plus, CheckSquare, Wallet, Calendar as CalendarIcon, LogOut, User } from 'lucide-react';
 import { Dashboard } from './pages/Dashboard';
 import { Contacts } from './pages/Contacts';
 import { Tasks } from './pages/Tasks';
@@ -8,9 +8,11 @@ import { Budget } from './pages/Budget';
 import { Calendar } from './pages/Calendar';
 import { useReminders } from './hooks/useReminders';
 import { CreateEntityModal } from './components/CreateEntityModal';
+import { useUser } from './context/UserContext';
 
 function AppContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { currentUser, logout } = useUser();
   useReminders();
   const location = useLocation();
 
@@ -57,6 +59,20 @@ function AppContent() {
           <Link to="/contacts" style={desktopNavStyle('/contacts')}><Users size={18} />Хора</Link>
           <Link to="/calendar" style={desktopNavStyle('/calendar')}><CalendarIcon size={18} />Календар</Link>
           <Link to="/budget" style={desktopNavStyle('/budget')}><Wallet size={18} />Бюджет</Link>
+          <div style={{ width: '1px', height: '24px', background: 'var(--panel-border)', margin: '0 6px' }} />
+          {/* Current user */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--card-pink)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {currentUser?.photoUrl
+                ? <img src={currentUser.photoUrl} alt={currentUser.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <User size={16} color="#f43f5e" />
+              }
+            </div>
+            <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>{currentUser?.name}</span>
+            <button onClick={logout} title="Изход" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: '4px', borderRadius: '8px' }}>
+              <LogOut size={17} />
+            </button>
+          </div>
         </nav>
       </header>
 

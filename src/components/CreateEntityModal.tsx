@@ -4,6 +4,7 @@ import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import { useData } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
+import { useUser } from '../context/UserContext';
 import type { FamilyRole, ExpenseCategory } from '../types';
 import { EXPENSE_CATEGORIES } from '../types';
 
@@ -26,12 +27,14 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
   const isEdit = !!editData;
   const { people, addPerson, addEvent, addRoutine, addTask, addExpense, updatePerson, updateEvent, updateRoutine, updateTask, updateExpense } = useData();
   const { addToast } = useToast();
+  const { currentUser } = useUser();
   const [loading, setLoading] = useState(false);
 
   const [tab, setTab]               = useState<'person' | 'event' | 'routine' | 'task' | 'expense'>('person');
   const [name, setName]             = useState('');
   const [phone, setPhone]           = useState('');
   const [role, setRole]             = useState<FamilyRole | ''>('');
+  const [pin, setPin]               = useState('');
   const [eventType, setEventType]   = useState('🎂 Рожден ден');
   const [eventDate, setEventDate]   = useState('');
   const [eventPerson, setEventPerson]     = useState('');
@@ -55,6 +58,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
         setName(editData.name);
         setPhone(editData.phone);
         setRole(editData.role ?? '');
+        setPin('');
       } else if (editData.tab === 'event') {
         setEventType(editData.eventType);
         setEventDate(editData.eventDate);
@@ -75,10 +79,10 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
       }
     } else {
       setTab('person');
-      setName(''); setPhone(''); setRole('');
+      setName(''); setPhone(''); setRole(''); setPin('');
       setEventType('🎂 Рожден ден'); setEventDate(''); setEventPerson('');
       setMedication(''); setTime(''); setRoutinePerson('');
-      setTaskTitle(''); setTaskDueDate(''); setTaskPerson('');
+      setTaskTitle(''); setTaskDueDate(''); setTaskPerson(currentUser?.id ?? '');
       setExpenseAmount(''); setExpenseCategory(EXPENSE_CATEGORIES[0]); setExpenseDate(''); setExpensePaidBy('');
     }
   }, [isOpen, editData]);
@@ -90,8 +94,8 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
 
     if (tab === 'person') {
       success = isEdit
-        ? await updatePerson(editData!.id, { name, phone, role: role || undefined })
-        : await addPerson({ name, phone, role: role || undefined });
+        ? await updatePerson(editData!.id, { name, phone, role: role || undefined, pin: pin || undefined })
+        : await addPerson({ name, phone, role: role || undefined, pin: pin || undefined });
     } else if (tab === 'event') {
       const payload = { type: eventType, date: eventDate, personIds: eventPerson ? [eventPerson] : [] };
       success = isEdit
@@ -164,6 +168,15 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
                 {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
+            <Input
+              label={isEdit ? 'Нов PIN (4 цифри, остави празно за без промяна)' : 'PIN (4 цифри, незадължително)'}
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={pin}
+              onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              placeholder="••••"
+            />
           </div>
         )}
 

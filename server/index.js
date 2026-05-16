@@ -42,9 +42,14 @@ app.all('/api/airtable/:table/:id', async (req, res) => {
   const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(table)}/${id}`;
 
   try {
+    const body = ['POST', 'PATCH', 'PUT'].includes(req.method)
+      ? JSON.stringify(req.body)
+      : undefined;
+
     const response = await fetch(url, {
       method: req.method,
       headers: { 'Authorization': `Bearer ${PAT}`, 'Content-Type': 'application/json' },
+      body,
     });
     const text = await response.text();
     const data = text ? JSON.parse(text) : {};

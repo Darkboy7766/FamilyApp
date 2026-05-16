@@ -6,6 +6,7 @@ export interface Person {
   photoUrl?: string;
   phone?: string;
   role?: FamilyRole;
+  pin?: string;
 }
 
 export interface EventRecord {

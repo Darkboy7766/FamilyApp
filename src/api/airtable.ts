@@ -39,10 +39,11 @@ export const airtableApi = {
         const photoArr = r.fields['Снимка'];
         return {
           id: r.id,
-          name: r.fields['Име'] || '',
+          name: r.fields['Иìе'] || '',
           photoUrl: photoArr && photoArr.length > 0 ? photoArr[0].url : '',
           phone: r.fields['Телефон'] || '',
           role: (r.fields['Роля'] as FamilyRole) || undefined,
+          pin: r.fields['PIN'] || '',
         };
       });
     } catch (e) {
@@ -85,7 +86,7 @@ export const airtableApi = {
     try {
       const res = await fetch(getUrl('Хора'), {
         method: 'POST', headers,
-        body: JSON.stringify({ records: [{ fields: cleanFields({ 'Иìе': data.name, 'Телефон': data.phone, 'Роля': data.role }) }], typecast: true }),
+        body: JSON.stringify({ records: [{ fields: cleanFields({ 'Иìе': data.name, 'Телефон': data.phone, 'Роля': data.role, 'PIN': data.pin }) }], typecast: true }),
       });
       if (!res.ok) { console.error(await res.json()); return null; }
       const r = (await res.json()).records[0];
@@ -109,7 +110,7 @@ export const airtableApi = {
     try {
       const res = await fetch(`/api/airtable/${encodeURIComponent('Хора')}/${id}`, {
         method: 'PATCH', headers,
-        body: JSON.stringify({ fields: cleanFields({ 'Иìе': data.name, 'Телефон': data.phone, 'Роля': data.role }) }),
+        body: JSON.stringify({ fields: cleanFields({ 'Иìе': data.name, 'Телефон': data.phone, 'Роля': data.role, 'PIN': data.pin }) }),
       });
       if (!res.ok) console.error(await res.json());
       return res.ok;

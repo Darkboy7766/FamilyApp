@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
+import { useUser } from '../context/UserContext';
 import type { Task } from '../types';
 import { Trash2, Pencil, CheckSquare, ClipboardList } from 'lucide-react';
 import { format, parseISO, isToday, isPast, isFuture, startOfDay } from 'date-fns';
@@ -11,10 +12,16 @@ import type { EditData } from '../components/CreateEntityModal';
 export const Tasks: React.FC = () => {
   const { tasks, people, loading, updateTask, deleteTask } = useData();
   const { addToast } = useToast();
+  const { currentUser } = useUser();
   const [editData, setEditData] = useState<EditData | undefined>();
   const [showDone, setShowDone] = useState(false);
 
   if (loading) return <div className="animate-fade-in" style={{ padding: '2rem', textAlign: 'center' }}>Зареждане...</div>;
+
+  // My tasks + shared (no person assigned). Tasks for others are hidden.
+  const visibleTasks = tasks.filter(t =>
+    !t.personIds?.length || t.personIds.includes(currentUser!.id)
+  );
 
   const getPersonName = (ids?: string[]) => {
     if (!ids || ids.length === 0) return null;
@@ -32,8 +39,8 @@ export const Tasks: React.FC = () => {
     if (!ok) addToast('Грешка при изтриване.', 'error');
   };
 
-  const undone = tasks.filter(t => !t.done);
-  const done   = tasks.filter(t => t.done);
+  const undone = visibleTasks.filter(t => !t.done);
+  const done   = visibleTasks.filter(t => t.done);
 
   const today    = undone.filter(t => t.dueDate && isToday(parseISO(t.dueDate)));
   const overdue  = undone.filter(t => t.dueDate && isPast(startOfDay(parseISO(t.dueDate))) && !isToday(parseISO(t.dueDate)));
@@ -41,7 +48,7 @@ export const Tasks: React.FC = () => {
   const noDate   = undone.filter(t => !t.dueDate);
 
   const doneCount = done.length;
-  const totalCount = tasks.length;
+  const totalCount = visibleTasks.length;
 
   const TaskItem: React.FC<{ task: Task }> = ({ task }) => {
     const isOverdue = task.dueDate && isPast(startOfDay(parseISO(task.dueDate))) && !isToday(parseISO(task.dueDate));
@@ -119,7 +126,7 @@ export const Tasks: React.FC = () => {
       </div>
 
       {/* Empty state */}
-      {tasks.length === 0 && (
+      {visibleTasks.length === 0 && (
         <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-secondary)' }}>
           <ClipboardList size={48} color="var(--panel-border)" style={{ margin: '0 auto 1rem' }} />
           <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Няма задачи</p>
@@ -135,7 +142,7 @@ export const Tasks: React.FC = () => {
       )}
 
       {/* Task groups */}
-      {tasks.length > 0 && (
+      {visibleTasks.length > 0 && (
         <div>
           <Section title="Просрочени" items={overdue} color="var(--danger-color)" />
           <Section title="Днес" items={today} color="var(--warning-color)" />

@@ -40,7 +40,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading]     = useState<boolean>(true);
   const [error, setError]         = useState<string | null>(null);
 
+  const loadingRef = React.useRef(false);
+
   const refreshData = async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     try {
       setLoading(true);
       setError(null);
@@ -60,6 +64,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setError(err.message || 'Грешка при зареждане');
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
   };
 

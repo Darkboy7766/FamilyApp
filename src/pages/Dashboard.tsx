@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
+import { useUser } from '../context/UserContext';
 import { Card } from '../components/ui/Card';
 import type { EventRecord, Routine, Task } from '../types';
 import { format, parseISO, addDays, isWithinInterval, startOfDay, isToday, isPast } from 'date-fns';
@@ -16,6 +17,7 @@ import type { EditData } from '../components/CreateEntityModal';
 export const Dashboard: React.FC = () => {
   const { events, routines, tasks, people, loading, updateTask, deleteEvent, deleteRoutine } = useData();
   const { addToast } = useToast();
+  const { currentUser } = useUser();
   const [editData, setEditData] = React.useState<EditData | undefined>();
 
   const now = new Date();
@@ -43,13 +45,18 @@ export const Dashboard: React.FC = () => {
     return ma - mb;
   });
 
-  const todayTasks = tasks.filter(
+  // My tasks + shared (no person). Tasks for others are hidden.
+  const visibleTasks = tasks.filter((t: Task) =>
+    !t.personIds?.length || t.personIds.includes(currentUser!.id)
+  );
+
+  const todayTasks = visibleTasks.filter(
     (t: Task) => !t.done && t.dueDate && isToday(parseISO(t.dueDate))
   );
-  const overdueTasks = tasks.filter(
+  const overdueTasks = visibleTasks.filter(
     (t: Task) => !t.done && t.dueDate && isPast(startOfDay(parseISO(t.dueDate))) && !isToday(parseISO(t.dueDate))
   );
-  const pendingCount = tasks.filter((t: Task) => !t.done).length;
+  const pendingCount = visibleTasks.filter((t: Task) => !t.done).length;
 
   const todayRoutines = [...routines].sort((a: Routine, b: Routine) =>
     (a.time || '').localeCompare(b.time || '')
