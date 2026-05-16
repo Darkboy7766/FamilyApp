@@ -9,13 +9,8 @@ import type { EditData } from '../components/CreateEntityModal';
 import { baserowApi as airtableApi } from '../api/baserow';
 
 const ROLE_COLORS: Record<FamilyRole, { bg: string; color: string }> = {
-  'Майка':  { bg: '#fce7f3', color: '#be185d' },
-  'Баща':   { bg: '#dbeafe', color: '#1d4ed8' },
-  'Дете':   { bg: '#d1fae5', color: '#065f46' },
-  'Баба':   { bg: '#fef3c7', color: '#92400e' },
-  'Дядо':   { bg: '#ede9fe', color: '#5b21b6' },
-  'Брат':   { bg: '#e0f2fe', color: '#0369a1' },
-  'Сестра': { bg: '#fdf4ff', color: '#a21caf' },
+  'Момче':  { bg: '#dbeafe', color: '#1d4ed8' },
+  'Момиче': { bg: '#fce7f3', color: '#be185d' },
 };
 
 export const Contacts: React.FC = () => {

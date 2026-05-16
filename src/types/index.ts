@@ -1,4 +1,4 @@
-export type FamilyRole = 'Майка' | 'Баща' | 'Дете' | 'Баба' | 'Дядо' | 'Брат' | 'Сестра';
+export type FamilyRole = 'Момче' | 'Момиче';
 
 export interface Person {
   id: string;

@@ -15,7 +15,7 @@ export type EditData =
   | { tab: 'task';    id: string; title: string; dueDate: string; taskPersonId: string }
   | { tab: 'expense'; id: string; amount: number; category: string; date: string; paidById: string };
 
-const ROLES: FamilyRole[] = ['Майка', 'Баща', 'Дете', 'Баба', 'Дядо', 'Брат', 'Сестра'];
+const ROLES: FamilyRole[] = ['Момче', 'Момиче'];
 
 interface Props {
   isOpen: boolean;
