@@ -83,7 +83,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
       setEventType('🎂 Рожден ден'); setEventDate(''); setEventPerson('');
       setMedication(''); setTime(''); setRoutinePerson('');
       setTaskTitle(''); setTaskDueDate(''); setTaskPerson(currentUser?.id ?? '');
-      setExpenseAmount(''); setExpenseCategory(EXPENSE_CATEGORIES[0]); setExpenseDate(''); setExpensePaidBy('');
+      setExpenseAmount(''); setExpenseCategory(EXPENSE_CATEGORIES[0]); setExpenseDate(''); setExpensePaidBy(currentUser?.id ?? '');
     }
   }, [isOpen, editData]);
 

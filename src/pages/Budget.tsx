@@ -1,5 +1,6 @@
 import React from 'react';
 import { useData } from '../context/DataContext';
+import { useUser } from '../context/UserContext';
 import { useToast } from '../context/ToastContext';
 import { Card } from '../components/ui/Card';
 import { CreateEntityModal } from '../components/CreateEntityModal';
@@ -28,6 +29,7 @@ const CATEGORY_TEXT: Record<string, string> = {
 
 export const Budget: React.FC = () => {
   const { expenses, people, deleteExpense, loading } = useData();
+  const { currentUser } = useUser();
   const { addToast } = useToast();
   const [editData, setEditData] = React.useState<EditData | undefined>();
 
@@ -42,7 +44,9 @@ export const Budget: React.FC = () => {
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
-  const thisMonthExpenses = expenses.filter((e: Expense) => {
+  const myExpenses = expenses.filter((e: Expense) => e.paidById === currentUser?.id);
+
+  const thisMonthExpenses = myExpenses.filter((e: Expense) => {
     if (!e.date) return false;
     try { return isWithinInterval(parseISO(e.date), { start: monthStart, end: monthEnd }); }
     catch { return false; }
@@ -55,7 +59,7 @@ export const Budget: React.FC = () => {
     return acc;
   }, {});
 
-  const sorted = [...expenses].sort((a, b) => {
+  const sorted = [...myExpenses].sort((a, b) => {
     if (!a.date) return 1;
     if (!b.date) return -1;
     return b.date.localeCompare(a.date);
