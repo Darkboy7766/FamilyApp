@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Person, EventRecord, Routine, Task, Expense } from '../types';
-import { airtableApi } from '../api/airtable';
+import { baserowApi as airtableApi } from '../api/baserow';
 
 interface DataContextType {
   people: Person[];

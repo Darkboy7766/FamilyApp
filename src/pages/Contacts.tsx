@@ -6,7 +6,7 @@ import { User, Trash2, Pencil, Search, Camera } from 'lucide-react';
 import type { Person, EventRecord, Routine, FamilyRole } from '../types';
 import { CreateEntityModal } from '../components/CreateEntityModal';
 import type { EditData } from '../components/CreateEntityModal';
-import { airtableApi } from '../api/airtable';
+import { baserowApi as airtableApi } from '../api/baserow';
 
 const ROLE_COLORS: Record<FamilyRole, { bg: string; color: string }> = {
   'Майка':  { bg: '#fce7f3', color: '#be185d' },

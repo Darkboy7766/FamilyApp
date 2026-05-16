@@ -3,16 +3,13 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  const { recordId } = req.query;
-  const PAT = process.env.AIRTABLE_PAT;
-  const BASE_ID = process.env.AIRTABLE_BASE_ID;
+  const TOKEN = process.env.BASEROW_TOKEN;
 
-  if (!PAT || !BASE_ID) {
-    return res.status(500).json({ error: 'Missing Airtable credentials' });
+  if (!TOKEN) {
+    return res.status(500).json({ error: 'Missing BASEROW_TOKEN' });
   }
 
   const contentType = req.headers['content-type'];
-  const url = `https://content.airtable.com/v0/${BASE_ID}/${recordId}/${encodeURIComponent('Снимка')}/uploadAttachment`;
 
   try {
     const chunks = [];
@@ -21,9 +18,9 @@ export default async function handler(req, res) {
     }
     const body = Buffer.concat(chunks);
 
-    const response = await fetch(url, {
+    const response = await fetch('https://api.baserow.io/api/user-files/upload-file/', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${PAT}`, 'Content-Type': contentType },
+      headers: { 'Authorization': `Token ${TOKEN}`, 'Content-Type': contentType },
       body,
     });
 

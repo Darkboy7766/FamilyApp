@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"https://api.airtable.com/v0/meta/bases/appTMIztEk2bCbzzL/tables\" -H \"Authorization: Bearer patzcvo98Pht1yty4.880ddf8ffbd14d242a931e9de13f3ba4c0181962b5be98864fa980ef6160c4dd\")",
+      "Bash(python -m json.tool)",
+      "Bash(curl *)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}

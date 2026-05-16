@@ -6,26 +6,32 @@ import { config } from 'dotenv';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: join(__dirname, '../.env') });
 
-const PAT = process.env.AIRTABLE_PAT;
-const BASE_ID = process.env.AIRTABLE_BASE_ID;
+const TOKEN = process.env.BASEROW_TOKEN;
+const TABLE_IDS = {
+  people:   process.env.BASEROW_TABLE_PEOPLE,
+  events:   process.env.BASEROW_TABLE_EVENTS,
+  routines: process.env.BASEROW_TABLE_ROUTINES,
+  tasks:    process.env.BASEROW_TABLE_TASKS,
+  expenses: process.env.BASEROW_TABLE_EXPENSES,
+};
 
-if (!PAT || !BASE_ID) {
-  console.error('Грешка: Липсва AIRTABLE_PAT или AIRTABLE_BASE_ID в .env файла.');
+if (!TOKEN || Object.values(TABLE_IDS).some(v => !v)) {
+  console.error('Грешка: Липсват BASEROW_TOKEN или BASEROW_TABLE_* в .env файла.');
   process.exit(1);
 }
+
+const BASEROW = 'https://api.baserow.io';
+const authHeader = () => ({ 'Authorization': `Token ${TOKEN}`, 'Content-Type': 'application/json' });
 
 const app = express();
 app.use(express.json());
 
-// Direct file upload → Airtable Content API (must be before express.json routes)
+// Photo upload → Baserow user files (recordId param is ignored at upload time)
 app.post('/api/upload-photo/:recordId', express.raw({ type: 'multipart/*', limit: '10mb' }), async (req, res) => {
-  const { recordId } = req.params;
-  const contentType = req.headers['content-type'];
-  const url = `https://content.airtable.com/v0/${BASE_ID}/${recordId}/${encodeURIComponent('Снимка')}/uploadAttachment`;
   try {
-    const response = await fetch(url, {
+    const response = await fetch(`${BASEROW}/api/user-files/upload-file/`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${PAT}`, 'Content-Type': contentType },
+      headers: { 'Authorization': `Token ${TOKEN}`, 'Content-Type': req.headers['content-type'] },
       body: req.body,
     });
     const data = await response.json();
@@ -36,21 +42,15 @@ app.post('/api/upload-photo/:recordId', express.raw({ type: 'multipart/*', limit
   }
 });
 
-app.all('/api/airtable/:table/:id', async (req, res) => {
-  const table = decodeURIComponent(req.params.table);
-  const id = req.params.id;
-  const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(table)}/${id}`;
+// Single row: GET / PATCH / DELETE /api/baserow/:table/:id
+app.all('/api/baserow/:table/:id', async (req, res) => {
+  const tableId = TABLE_IDS[req.params.table];
+  if (!tableId) return res.status(404).json({ error: 'Unknown table' });
 
+  const url = `${BASEROW}/api/database/rows/table/${tableId}/${req.params.id}/?user_field_names=true`;
   try {
-    const body = ['POST', 'PATCH', 'PUT'].includes(req.method)
-      ? JSON.stringify(req.body)
-      : undefined;
-
-    const response = await fetch(url, {
-      method: req.method,
-      headers: { 'Authorization': `Bearer ${PAT}`, 'Content-Type': 'application/json' },
-      body,
-    });
+    const body = ['POST', 'PATCH', 'PUT'].includes(req.method) ? JSON.stringify(req.body) : undefined;
+    const response = await fetch(url, { method: req.method, headers: authHeader(), body });
     const text = await response.text();
     const data = text ? JSON.parse(text) : {};
     res.status(response.status).json(data);
@@ -60,25 +60,16 @@ app.all('/api/airtable/:table/:id', async (req, res) => {
   }
 });
 
-app.all('/api/airtable/:table', async (req, res) => {
-  const table = decodeURIComponent(req.params.table);
+// Row list + create: GET / POST /api/baserow/:table
+app.all('/api/baserow/:table', async (req, res) => {
+  const tableId = TABLE_IDS[req.params.table];
+  if (!tableId) return res.status(404).json({ error: 'Unknown table' });
+
   const qs = new URLSearchParams(req.query).toString();
-  const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(table)}${qs ? `?${qs}` : ''}`;
-
+  const url = `${BASEROW}/api/database/rows/table/${tableId}/?user_field_names=true${qs ? `&${qs}` : ''}`;
   try {
-    const body = ['POST', 'PATCH', 'PUT'].includes(req.method)
-      ? JSON.stringify(req.body)
-      : undefined;
-
-    const response = await fetch(url, {
-      method: req.method,
-      headers: {
-        'Authorization': `Bearer ${PAT}`,
-        'Content-Type': 'application/json',
-      },
-      body,
-    });
-
+    const body = ['POST', 'PATCH', 'PUT'].includes(req.method) ? JSON.stringify(req.body) : undefined;
+    const response = await fetch(url, { method: req.method, headers: authHeader(), body });
     const data = await response.json();
     res.status(response.status).json(data);
   } catch (err) {
