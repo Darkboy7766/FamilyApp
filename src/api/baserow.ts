@@ -21,8 +21,8 @@ function toIds(row: any, field: string): string[] {
   return (row[field] || []).map((x: any) => String(x.id));
 }
 
-function fromIds(ids: string[]): { id: number }[] {
-  return ids.map(id => ({ id: Number(id) }));
+function fromIds(ids: string[]): number[] {
+  return ids.map(id => Number(id));
 }
 
 export const baserowApi = {
@@ -82,7 +82,7 @@ export const baserowApi = {
       const rows = await fetchAllRows('expenses');
       return rows.map((r: any) => ({
         id: String(r.id),
-        amount: r.Amount ?? 0,
+        amount: Number(r.Amount) || 0,
         category: r.Category?.value || 'Друго',
         date: r.Date || '',
         paidById: Array.isArray(r.PaidBy) && r.PaidBy.length > 0 ? String(r.PaidBy[0].id) : undefined,
@@ -151,13 +151,13 @@ export const baserowApi = {
       if (data.amount !== undefined) body.Amount = data.amount;
       if (data.category) body.Category = data.category;
       if (data.date) body.Date = data.date;
-      if (data.paidById) body.PaidBy = [{ id: Number(data.paidById) }];
+      if (data.paidById) body.PaidBy = [Number(data.paidById)];
       const res = await fetch(`${BASE}/expenses`, { method: 'POST', headers, body: JSON.stringify(body) });
       if (!res.ok) { console.error(await res.json()); return null; }
       const r = await res.json();
       return {
         id: String(r.id),
-        amount: r.Amount ?? data.amount ?? 0,
+        amount: Number(r.Amount ?? data.amount) || 0,
         category: r.Category?.value || data.category || 'Друго',
         date: r.Date || data.date || '',
         paidById: Array.isArray(r.PaidBy) && r.PaidBy.length > 0 ? String(r.PaidBy[0].id) : data.paidById,
@@ -221,7 +221,7 @@ export const baserowApi = {
       if (data.amount !== undefined) body.Amount = data.amount;
       if (data.category !== undefined) body.Category = data.category;
       if (data.date !== undefined) body.Date = data.date;
-      if (data.paidById !== undefined) body.PaidBy = data.paidById ? [{ id: Number(data.paidById) }] : [];
+      if (data.paidById !== undefined) body.PaidBy = data.paidById ? [Number(data.paidById)] : [];
       const res = await fetch(`${BASE}/expenses/${id}`, { method: 'PATCH', headers, body: JSON.stringify(body) });
       if (!res.ok) console.error(await res.json());
       return res.ok;

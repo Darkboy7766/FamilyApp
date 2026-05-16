@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
-import { useUser } from '../context/UserContext';
 import type { Task } from '../types';
 import { Trash2, Pencil, CheckSquare, ClipboardList } from 'lucide-react';
 import { format, parseISO, isToday, isPast, isFuture, startOfDay } from 'date-fns';
@@ -12,16 +11,12 @@ import type { EditData } from '../components/CreateEntityModal';
 export const Tasks: React.FC = () => {
   const { tasks, people, loading, updateTask, deleteTask } = useData();
   const { addToast } = useToast();
-  const { currentUser } = useUser();
   const [editData, setEditData] = useState<EditData | undefined>();
   const [showDone, setShowDone] = useState(false);
 
   if (loading) return <div className="animate-fade-in" style={{ padding: '2rem', textAlign: 'center' }}>Зареждане...</div>;
 
-  // My tasks + shared (no person assigned). Tasks for others are hidden.
-  const visibleTasks = tasks.filter(t =>
-    !t.personIds?.length || t.personIds.includes(currentUser!.id)
-  );
+  const visibleTasks = tasks;
 
   const getPersonName = (ids?: string[]) => {
     if (!ids || ids.length === 0) return null;

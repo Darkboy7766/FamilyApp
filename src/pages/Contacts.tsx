@@ -104,7 +104,7 @@ export const Contacts: React.FC = () => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)' }}>{person.name || 'Безименен'}</h3>
                     {person.role && (
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', background: ROLE_COLORS[person.role].bg, color: ROLE_COLORS[person.role].color }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', background: ROLE_COLORS[person.role]?.bg ?? '#f1f5f9', color: ROLE_COLORS[person.role]?.color ?? '#475569' }}>
                         {person.role}
                       </span>
                     )}

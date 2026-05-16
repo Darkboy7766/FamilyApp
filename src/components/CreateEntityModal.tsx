@@ -123,7 +123,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
       addToast(isEdit ? 'Промените са запазени!' : 'Успешно добавено!', 'success');
       onClose();
     } else {
-      addToast('Грешка при запис. Проверете връзката с Airtable.', 'error');
+      addToast('Грешка при запис. Проверете връзката с Baserow.', 'error');
     }
   };
 
