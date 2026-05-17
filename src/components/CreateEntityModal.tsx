@@ -9,8 +9,8 @@ import type { FamilyRole, ExpenseCategory } from '../types';
 import { EXPENSE_CATEGORIES } from '../types';
 
 export type EditData =
-  | { tab: 'person';  id: string; name: string; phone: string; role?: FamilyRole }
-  | { tab: 'event';   id: string; eventType: string; eventDate: string; eventPersonId: string }
+  | { tab: 'person';  id: string; name: string; phone: string; email?: string; role?: FamilyRole }
+  | { tab: 'event';   id: string; eventType: string; eventDate: string; eventPersonIds: string[] }
   | { tab: 'routine'; id: string; medication: string; time: string; routinePersonId: string }
   | { tab: 'task';    id: string; title: string; dueDate: string; taskPersonId: string }
   | { tab: 'expense'; id: string; amount: number; category: string; date: string; paidById: string };
@@ -33,11 +33,12 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
   const [tab, setTab]               = useState<'person' | 'event' | 'routine' | 'task' | 'expense'>('person');
   const [name, setName]             = useState('');
   const [phone, setPhone]           = useState('');
+  const [email, setEmail]           = useState('');
   const [role, setRole]             = useState<FamilyRole | ''>('');
   const [pin, setPin]               = useState('');
   const [eventType, setEventType]   = useState('🎂 Рожден ден');
   const [eventDate, setEventDate]   = useState('');
-  const [eventPerson, setEventPerson]     = useState('');
+  const [eventPersonIds, setEventPersonIds] = useState<string[]>([]);
   const [medication, setMedication] = useState('');
   const [time, setTime]             = useState('');
   const [routinePerson, setRoutinePerson] = useState('');
@@ -57,12 +58,13 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
       if (editData.tab === 'person') {
         setName(editData.name);
         setPhone(editData.phone);
+        setEmail(editData.email ?? '');
         setRole(editData.role ?? '');
         setPin('');
       } else if (editData.tab === 'event') {
         setEventType(editData.eventType);
         setEventDate(editData.eventDate);
-        setEventPerson(editData.eventPersonId);
+        setEventPersonIds(editData.eventPersonIds);
       } else if (editData.tab === 'routine') {
         setMedication(editData.medication);
         setTime(editData.time);
@@ -79,8 +81,8 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
       }
     } else {
       setTab('person');
-      setName(''); setPhone(''); setRole(''); setPin('');
-      setEventType('🎂 Рожден ден'); setEventDate(''); setEventPerson('');
+      setName(''); setPhone(''); setEmail(''); setRole(''); setPin('');
+      setEventType('🎂 Рожден ден'); setEventDate(''); setEventPersonIds([]);
       setMedication(''); setTime(''); setRoutinePerson('');
       setTaskTitle(''); setTaskDueDate(''); setTaskPerson(currentUser?.id ?? '');
       setExpenseAmount(''); setExpenseCategory(EXPENSE_CATEGORIES[0]); setExpenseDate(''); setExpensePaidBy(currentUser?.id ?? '');
@@ -94,10 +96,10 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
 
     if (tab === 'person') {
       success = isEdit
-        ? await updatePerson(editData!.id, { name, phone, role: role || undefined, pin: pin || undefined })
-        : await addPerson({ name, phone, role: role || undefined, pin: pin || undefined });
+        ? await updatePerson(editData!.id, { name, phone, email: email || undefined, role: role || undefined, pin: pin || undefined })
+        : await addPerson({ name, phone, email: email || undefined, role: role || undefined, pin: pin || undefined });
     } else if (tab === 'event') {
-      const payload = { type: eventType, date: eventDate, personIds: eventPerson ? [eventPerson] : [] };
+      const payload = { type: eventType, date: eventDate, personIds: eventPersonIds };
       success = isEdit
         ? await updateEvent(editData!.id, payload)
         : await addEvent(payload);
@@ -161,6 +163,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
           <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <Input label="Иìе" value={name} onChange={e => setName(e.target.value)} required placeholder="Пр: Иван Иванов" />
             <Input label="Телефон" value={phone} onChange={e => setPhone(e.target.value)} placeholder="0888..." />
+            <Input label="Имейл (за известия)" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ivan@example.com" />
             <div>
               <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>Семейна роля</label>
               <select style={selectStyle} value={role} onChange={e => setRole(e.target.value as FamilyRole | '')}>
@@ -185,11 +188,29 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
             <Input label="Тип събитие" value={eventType} onChange={e => setEventType(e.target.value)} required placeholder="Рожден ден, Годишнина..." />
             <Input label="Дата" type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} required />
             <div>
-              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>Свързан човек</label>
-              <select style={selectStyle} value={eventPerson} onChange={e => setEventPerson(e.target.value)} required>
-                <option value="">-- Избери човек --</option>
-                {people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>Свързани хора</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setEventPersonIds(eventPersonIds.length === people.length ? [] : people.map(p => p.id))}
+                  style={{ padding: '6px 14px', borderRadius: '20px', border: '1.5px solid', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, transition: 'var(--transition)', borderColor: eventPersonIds.length === people.length ? 'var(--accent-color)' : 'var(--panel-border)', background: eventPersonIds.length === people.length ? 'var(--accent-color)' : 'transparent', color: eventPersonIds.length === people.length ? '#fff' : 'var(--text-secondary)' }}
+                >
+                  Всички
+                </button>
+                {people.map(p => {
+                  const active = eventPersonIds.includes(p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setEventPersonIds(active ? eventPersonIds.filter(id => id !== p.id) : [...eventPersonIds, p.id])}
+                      style={{ padding: '6px 14px', borderRadius: '20px', border: '1.5px solid', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, transition: 'var(--transition)', borderColor: active ? 'var(--accent-color)' : 'var(--panel-border)', background: active ? 'var(--accent-color)' : 'transparent', color: active ? '#fff' : 'var(--text-primary)' }}
+                    >
+                      {p.name}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}

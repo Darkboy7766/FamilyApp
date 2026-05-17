@@ -166,7 +166,7 @@ export const Dashboard: React.FC = () => {
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '2px', flexShrink: 0 }}>
-                      <button onClick={() => setEditData({ tab: 'event', id: e.id, eventType: e.type, eventDate: e.date ?? '', eventPersonId: e.personIds?.[0] ?? '' })} style={iconBtn} title="Редактирай"><Pencil size={14} /></button>
+                      <button onClick={() => setEditData({ tab: 'event', id: e.id, eventType: e.type, eventDate: e.date ?? '', eventPersonIds: e.personIds ?? [] })} style={iconBtn} title="Редактирай"><Pencil size={14} /></button>
                       <button onClick={async () => { if (!window.confirm(`Изтрий "${e.type}"?`)) return; const ok = await deleteEvent(e.id); if (!ok) addToast('Грешка.', 'error'); }} style={{ ...iconBtn, color: 'var(--danger-color)' }} title="Изтрий"><Trash2 size={14} /></button>
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { HeartPulse, User } from 'lucide-react';
+import { Users, User } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useUser } from '../context/UserContext';
 import type { Person } from '../types';
@@ -33,7 +33,7 @@ export const UserGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
   // ── Loading ──
   if (loading) return (
     <div style={screen}>
-      <HeartPulse size={32} color="#f43f5e" />
+      <Users size={32} color="#0ea5e9" />
       <span style={appTitle}>Family CRM</span>
       <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>Зареждане...</div>
     </div>
@@ -73,7 +73,7 @@ export const UserGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
     return (
       <div style={screen}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <HeartPulse size={28} color="#f43f5e" />
+          <Users size={28} color="#0ea5e9" />
           <span style={appTitle}>Family CRM</span>
         </div>
 
@@ -135,7 +135,7 @@ export const UserGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
   return (
     <div style={screen}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-        <HeartPulse size={28} color="#f43f5e" />
+        <Users size={28} color="#0ea5e9" />
         <span style={appTitle}>Family CRM</span>
       </div>
 

@@ -1,7 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#10b981"/>
-  <!-- Heart -->
-  <path d="M256 370 L140 255 C105 220 105 168 140 145 C168 127 200 135 256 178 C312 135 344 127 372 145 C407 168 407 220 372 255 Z" fill="white" opacity="0.95"/>
-  <!-- EKG line through heart -->
-  <polyline points="156,256 196,256 216,206 236,306 256,256 276,256 296,230 316,256 356,256" fill="none" stroke="#10b981" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="512" height="512" rx="112" fill="#0ea5e9"/>
+  <!-- Two people silhouettes (Users icon style) -->
+  <!-- Back person (left) -->
+  <circle cx="210" cy="168" r="52" fill="white" opacity="0.85"/>
+  <path d="M110 340 C110 290 158 258 210 258 C240 258 267 270 285 290 C263 298 244 314 233 340 Z" fill="white" opacity="0.85"/>
+  <!-- Front person (right, slightly larger) -->
+  <circle cx="302" cy="178" r="58" fill="white"/>
+  <path d="M180 390 C180 332 238 294 302 294 C366 294 424 332 424 390 L424 400 L180 400 Z" fill="white"/>
 </svg>

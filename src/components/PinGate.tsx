@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { HeartPulse } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 const SESSION_KEY = 'familycrm_unlocked';
 const CORRECT_PIN = import.meta.env.VITE_APP_PIN ?? '1234';
@@ -64,7 +64,7 @@ export function PinGate({ children }: Props) {
       gap: '2rem',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-        <HeartPulse size={32} color="#f43f5e" />
+        <Users size={32} color="#0ea5e9" />
         <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e293b' }}>Family CRM</span>
       </div>
 

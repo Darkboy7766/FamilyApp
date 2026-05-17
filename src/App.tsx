@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Users, LayoutDashboard, HeartPulse, Plus, CheckSquare, Wallet, Calendar as CalendarIcon, LogOut, User } from 'lucide-react';
+import { Users, LayoutDashboard, Plus, CheckSquare, Wallet, Calendar as CalendarIcon, LogOut, User } from 'lucide-react';
 import { Dashboard } from './pages/Dashboard';
 import { Contacts } from './pages/Contacts';
 import { Tasks } from './pages/Tasks';
@@ -39,9 +39,22 @@ function AppContent() {
         style={{ padding: '0.875rem 1.25rem', margin: '0.75rem 1rem', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: 'none', flexShrink: 0 }}
       >
         <h1 style={{ margin: 0, fontSize: '1.3rem', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <HeartPulse size={24} color="#f43f5e" />
+          <Users size={24} color="#0ea5e9" />
           Family CRM
         </h1>
+
+        {/* Mobile: user avatar + logout */}
+        <div className="mobile-user-btn">
+          <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--card-pink)', flexShrink: 0 }}>
+            {currentUser?.photoUrl
+              ? <img src={currentUser.photoUrl} alt={currentUser.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <User size={16} color="#f43f5e" />
+            }
+          </div>
+          <button onClick={logout} title="Изход / Смяна на потребител" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: '6px', borderRadius: '10px' }}>
+            <LogOut size={19} />
+          </button>
+        </div>
 
         {/* Desktop nav */}
         <nav className="header-nav-links">

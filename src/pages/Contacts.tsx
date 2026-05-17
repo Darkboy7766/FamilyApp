@@ -109,7 +109,7 @@ export const Contacts: React.FC = () => {
               </div>
               <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                 <button
-                  onClick={() => setEditData({ tab: 'person', id: person.id, name: person.name, phone: person.phone ?? '', role: person.role })}
+                  onClick={() => setEditData({ tab: 'person', id: person.id, name: person.name, phone: person.phone ?? '', email: person.email ?? '', role: person.role })}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: '8px', borderRadius: '8px' }}
                   title="Редактирай"
                 >
@@ -187,7 +187,7 @@ const PersonDetail: React.FC<{ personId: string; onEdit: (d: EditData) => void }
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{e.date}</div>
               </div>
               <div style={{ display: 'flex', gap: '4px' }}>
-                <button onClick={() => onEdit({ tab: 'event', id: e.id, eventType: e.type, eventDate: e.date ?? '', eventPersonId: e.personIds?.[0] ?? '' })} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: '4px' }} title="Редактирай"><Pencil size={14} /></button>
+                <button onClick={() => onEdit({ tab: 'event', id: e.id, eventType: e.type, eventDate: e.date ?? '', eventPersonIds: e.personIds ?? [] })} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: '4px' }} title="Редактирай"><Pencil size={14} /></button>
                 <button onClick={() => handleDeleteEvent(e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger-color)', display: 'flex', padding: '4px' }} title="Изтрий"><Trash2 size={14} /></button>
               </div>
             </div>

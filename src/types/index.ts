@@ -5,6 +5,7 @@ export interface Person {
   name: string;
   photoUrl?: string;
   phone?: string;
+  email?: string;
   role?: FamilyRole;
   pin?: string;
 }
