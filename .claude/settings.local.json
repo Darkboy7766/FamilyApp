@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\YODA\\\\Desktop\\\\Projects\\\\FamilyCRM\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(npm install *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
