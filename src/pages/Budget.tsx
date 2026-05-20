@@ -96,7 +96,7 @@ export const Budget: React.FC = () => {
         }>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>
-              {totalMonth.toFixed(2)} лв.
+              {totalMonth.toFixed(2)} €
             </div>
 
             {Object.keys(byCategory).length === 0 ? (
@@ -115,7 +115,7 @@ export const Budget: React.FC = () => {
                       <div style={{ flex: 1, height: 6, background: '#f1f5f9', borderRadius: 3, overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${Math.round((amt / totalMonth) * 100)}%`, background: CATEGORY_TEXT[cat] ?? '#94a3b8', borderRadius: 3, transition: 'width 0.4s' }} />
                       </div>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{amt.toFixed(2)} лв.</span>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{amt.toFixed(2)} €</span>
                     </div>
                   ))}
               </div>
@@ -147,7 +147,7 @@ export const Budget: React.FC = () => {
                     {e.category.slice(0, 4)}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{e.amount.toFixed(2)} лв.</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{e.amount.toFixed(2)} €</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                       {e.date ? format(parseISO(e.date), 'd MMM yyyy', { locale: bg }) : ''}
                       {personName ? ` • ${personName}` : ''}
@@ -162,7 +162,7 @@ export const Budget: React.FC = () => {
                     </button>
                     <button
                       onClick={async () => {
-                        if (!window.confirm(`Изтрий разход от ${e.amount.toFixed(2)} лв.?`)) return;
+                        if (!window.confirm(`Изтрий разход от ${e.amount.toFixed(2)} €?`)) return;
                         const ok = await deleteExpense(e.id);
                         if (!ok) addToast('Грешка при изтриване.', 'error');
                       }}

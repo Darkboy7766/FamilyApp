@@ -163,10 +163,10 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {tab === 'person' && (
           <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <Input label="Иìе" value={name} onChange={e => setName(e.target.value)} required placeholder="Пр: Иван Иванов" />
+            <Input label="Име" value={name} onChange={e => setName(e.target.value)} required placeholder="Пр: Мики Маус" />
             <Input label="Телефон" value={phone} onChange={e => setPhone(e.target.value)} placeholder="0888..." />
-            <Input label="Имейл (за известия)" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ivan@example.com" />
-            <Input label="Дата на раждане (незадължително)" type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} />
+            <Input label="Имейл (за известия)" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="miki@example.com" />
+            <Input label="Дата на раждане" type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} />
             <div>
               <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>Семейна роля</label>
               <select style={selectStyle} value={role} onChange={e => setRole(e.target.value as FamilyRole | '')}>
@@ -234,7 +234,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
 
         {tab === 'task' && (
           <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <Input label="Задача" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} required placeholder="Пр: Купи лекарства" />
+            <Input label="Задача" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} required placeholder="Пр: Купи сладолед" />
             <Input label="Краен срок (незадължително)" type="date" value={taskDueDate} onChange={e => setTaskDueDate(e.target.value)} />
             <div>
               <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>За кого (незадължително)</label>
@@ -248,7 +248,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
 
         {tab === 'expense' && (
           <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <Input label="Сума (лв.)" type="number" inputMode="decimal" min="0" step="0.01" value={expenseAmount} onChange={e => setExpenseAmount(e.target.value)} required placeholder="Пр: 25.50" />
+            <Input label="Сума (€)" type="number" inputMode="decimal" min="0" step="0.01" value={expenseAmount} onChange={e => setExpenseAmount(e.target.value)} required placeholder="Пр: 25.50" />
             <div>
               <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>Категория</label>
               <select style={selectStyle} value={expenseCategory} onChange={e => setExpenseCategory(e.target.value as typeof EXPENSE_CATEGORIES[number])}>
