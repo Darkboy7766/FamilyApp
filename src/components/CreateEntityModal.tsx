@@ -9,7 +9,7 @@ import type { FamilyRole, ExpenseCategory } from '../types';
 import { EXPENSE_CATEGORIES } from '../types';
 
 export type EditData =
-  | { tab: 'person';  id: string; name: string; phone: string; email?: string; role?: FamilyRole }
+  | { tab: 'person';  id: string; name: string; phone: string; email?: string; role?: FamilyRole; birthDate?: string }
   | { tab: 'event';   id: string; eventType: string; eventDate: string; eventPersonIds: string[] }
   | { tab: 'routine'; id: string; medication: string; time: string; routinePersonId: string }
   | { tab: 'task';    id: string; title: string; dueDate: string; taskPersonId: string }
@@ -36,6 +36,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
   const [email, setEmail]           = useState('');
   const [role, setRole]             = useState<FamilyRole | ''>('');
   const [pin, setPin]               = useState('');
+  const [birthDate, setBirthDate]   = useState('');
   const [eventType, setEventType]   = useState('🎂 Рожден ден');
   const [eventDate, setEventDate]   = useState('');
   const [eventPersonIds, setEventPersonIds] = useState<string[]>([]);
@@ -60,6 +61,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
         setPhone(editData.phone);
         setEmail(editData.email ?? '');
         setRole(editData.role ?? '');
+        setBirthDate(editData.birthDate ?? '');
         setPin('');
       } else if (editData.tab === 'event') {
         setEventType(editData.eventType);
@@ -81,7 +83,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
       }
     } else {
       setTab('person');
-      setName(''); setPhone(''); setEmail(''); setRole(''); setPin('');
+      setName(''); setPhone(''); setEmail(''); setRole(''); setPin(''); setBirthDate('');
       setEventType('🎂 Рожден ден'); setEventDate(''); setEventPersonIds([]);
       setMedication(''); setTime(''); setRoutinePerson('');
       setTaskTitle(''); setTaskDueDate(''); setTaskPerson(currentUser?.id ?? '');
@@ -96,8 +98,8 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
 
     if (tab === 'person') {
       success = isEdit
-        ? await updatePerson(editData!.id, { name, phone, email: email || undefined, role: role || undefined, pin: pin || undefined })
-        : await addPerson({ name, phone, email: email || undefined, role: role || undefined, pin: pin || undefined });
+        ? await updatePerson(editData!.id, { name, phone, email: email || undefined, role: role || undefined, pin: pin || undefined, birthDate: birthDate || undefined })
+        : await addPerson({ name, phone, email: email || undefined, role: role || undefined, pin: pin || undefined, birthDate: birthDate || undefined });
     } else if (tab === 'event') {
       const payload = { type: eventType, date: eventDate, personIds: eventPersonIds };
       success = isEdit
@@ -164,6 +166,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
             <Input label="Иìе" value={name} onChange={e => setName(e.target.value)} required placeholder="Пр: Иван Иванов" />
             <Input label="Телефон" value={phone} onChange={e => setPhone(e.target.value)} placeholder="0888..." />
             <Input label="Имейл (за известия)" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ivan@example.com" />
+            <Input label="Дата на раждане (незадължително)" type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} />
             <div>
               <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>Семейна роля</label>
               <select style={selectStyle} value={role} onChange={e => setRole(e.target.value as FamilyRole | '')}>

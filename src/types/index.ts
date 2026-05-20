@@ -8,6 +8,7 @@ export interface Person {
   email?: string;
   role?: FamilyRole;
   pin?: string;
+  birthDate?: string;  // YYYY-MM-DD
 }
 
 export interface EventRecord {

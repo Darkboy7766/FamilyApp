@@ -109,7 +109,7 @@ export const Contacts: React.FC = () => {
               </div>
               <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                 <button
-                  onClick={() => setEditData({ tab: 'person', id: person.id, name: person.name, phone: person.phone ?? '', email: person.email ?? '', role: person.role })}
+                  onClick={() => setEditData({ tab: 'person', id: person.id, name: person.name, phone: person.phone ?? '', email: person.email ?? '', role: person.role, birthDate: person.birthDate ?? '' })}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: '8px', borderRadius: '8px' }}
                   title="Редактирай"
                 >

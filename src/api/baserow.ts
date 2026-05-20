@@ -37,6 +37,7 @@ export const baserowApi = {
         role: (r.Role?.value as FamilyRole) || undefined,
         pin: r.PIN || '',
         photoUrl: Array.isArray(r.Photo) && r.Photo.length > 0 ? r.Photo[0].url : '',
+        birthDate: r.BirthDate || undefined,
       }));
     } catch (e) { console.error(e); return []; }
   },
@@ -94,15 +95,16 @@ export const baserowApi = {
   createPerson: async (data: Partial<Person>): Promise<Person | null> => {
     try {
       const body: any = {};
-      if (data.name)  body.Name  = data.name;
-      if (data.phone) body.Phone = data.phone;
-      if (data.email) body.Email = data.email;
-      if (data.role)  body.Role  = data.role;
-      if (data.pin)   body.PIN   = data.pin;
+      if (data.name)      body.Name      = data.name;
+      if (data.phone)     body.Phone     = data.phone;
+      if (data.email)     body.Email     = data.email;
+      if (data.role)      body.Role      = data.role;
+      if (data.pin)       body.PIN       = data.pin;
+      if (data.birthDate) body.BirthDate = data.birthDate;
       const res = await fetch(`${BASE}/people`, { method: 'POST', headers, body: JSON.stringify(body) });
       if (!res.ok) { console.error(await res.json()); return null; }
       const r = await res.json();
-      return { id: String(r.id), name: r.Name || data.name || '', phone: r.Phone || data.phone || '', email: r.Email || data.email || '', photoUrl: '', role: r.Role?.value || data.role };
+      return { id: String(r.id), name: r.Name || data.name || '', phone: r.Phone || data.phone || '', email: r.Email || data.email || '', photoUrl: '', role: r.Role?.value || data.role, birthDate: r.BirthDate || data.birthDate };
     } catch (e) { console.error(e); return null; }
   },
 
@@ -170,11 +172,12 @@ export const baserowApi = {
   updatePerson: async (id: string, data: Partial<Person>): Promise<boolean> => {
     try {
       const body: any = {};
-      if (data.name  !== undefined) body.Name  = data.name;
-      if (data.phone !== undefined) body.Phone = data.phone;
-      if (data.email !== undefined) body.Email = data.email;
-      if (data.role  !== undefined) body.Role  = data.role;
-      if (data.pin   !== undefined) body.PIN   = data.pin;
+      if (data.name      !== undefined) body.Name      = data.name;
+      if (data.phone     !== undefined) body.Phone     = data.phone;
+      if (data.email     !== undefined) body.Email     = data.email;
+      if (data.role      !== undefined) body.Role      = data.role;
+      if (data.pin       !== undefined) body.PIN       = data.pin;
+      if (data.birthDate !== undefined) body.BirthDate = data.birthDate;
       const res = await fetch(`${BASE}/people/${id}`, { method: 'PATCH', headers, body: JSON.stringify(body) });
       if (!res.ok) console.error(await res.json());
       return res.ok;
