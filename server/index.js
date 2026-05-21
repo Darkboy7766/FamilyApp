@@ -17,8 +17,6 @@ const TABLE_IDS = {
   tasks:    process.env.BASEROW_TABLE_TASKS?.trim(),
   expenses: process.env.BASEROW_TABLE_EXPENSES?.trim(),
 };
-console.log('[Config] TABLE_IDS:', JSON.stringify(TABLE_IDS));
-
 const requiredTables = ['people', 'events', 'routines', 'tasks', 'expenses'];
 if (!TOKEN || requiredTables.some(t => !TABLE_IDS[t])) {
   console.error('Грешка: Липсват BASEROW_TOKEN или BASEROW_TABLE_* в .env файла.');
@@ -198,13 +196,6 @@ cron.schedule('0 8 * * *', () => {
 // ── Express ──
 const app = express();
 app.use(express.json());
-
-// Temporary diagnostic — shows table IDs (no secrets)
-app.get('/api/debug-tables', (_req, res) => {
-  res.json(Object.fromEntries(
-    Object.entries(TABLE_IDS).map(([k, v]) => [k, v ? `${String(v).length} chars: "${v}"` : 'MISSING'])
-  ));
-});
 
 // Manual trigger with diagnostics
 app.post('/api/send-reminders', async (_req, res) => {
