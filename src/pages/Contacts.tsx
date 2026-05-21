@@ -3,21 +3,18 @@ import { useData } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
 import { Card } from '../components/ui/Card';
 import { User, Trash2, Pencil, Search, Camera } from 'lucide-react';
-import type { Person, EventRecord, Routine, FamilyRole } from '../types';
+import type { Person, EventRecord, Routine, Family } from '../types';
+import { FAMILY_COLORS, PALETTE_KEYS } from '../types';
 import { CreateEntityModal } from '../components/CreateEntityModal';
 import type { EditData } from '../components/CreateEntityModal';
 import { baserowApi as airtableApi } from '../api/baserow';
 
-const ROLE_COLORS: Record<FamilyRole, { bg: string; color: string }> = {
-  'Момче':  { bg: '#dbeafe', color: '#1d4ed8' },
-  'Момиче': { bg: '#fce7f3', color: '#be185d' },
-};
-
 export const Contacts: React.FC = () => {
-  const { people, loading, deletePerson, refreshData } = useData();
+  const { families, people, loading, addFamily, deleteFamily, deletePerson, refreshData } = useData();
   const { addToast } = useToast();
   const [selectedPerson, setSelectedPerson] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [familyFilter, setFamilyFilter] = useState<string | null>(null);
   const [editData, setEditData] = useState<EditData | undefined>();
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,12 +44,16 @@ export const Contacts: React.FC = () => {
 
   if (loading) return <div className="animate-fade-in" style={{ padding: '2rem', textAlign: 'center' }}>Зареждане на данни...</div>;
 
-  const filtered = query.trim()
+  const byQuery = query.trim()
     ? people.filter(p =>
         p.name.toLowerCase().includes(query.toLowerCase()) ||
         (p.phone && p.phone.includes(query))
       )
     : people;
+
+  const filtered = familyFilter
+    ? byQuery.filter(p => p.familyIds?.includes(familyFilter))
+    : byQuery;
 
   const handleDeletePerson = async (person: Person) => {
     if (!window.confirm(`Изтрий ${person.name}? Свързаните събития и рутини ще останат в базата.`)) return;
@@ -61,8 +62,22 @@ export const Contacts: React.FC = () => {
     if (!ok) addToast('Грешка при изтриване.', 'error');
   };
 
+  const handleDeleteFamily = async (id: string) => {
+    const ok = await deleteFamily(id);
+    if (!ok) addToast('Грешка при изтриване на семейство.', 'error');
+    if (familyFilter === id) setFamilyFilter(null);
+  };
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <FamiliesPanel
+        families={families}
+        activeFamily={familyFilter}
+        onFilter={setFamilyFilter}
+        onAdd={addFamily}
+        onDelete={handleDeleteFamily}
+      />
+
       <div style={{ position: 'relative', maxWidth: '400px' }}>
         <Search size={18} color="var(--text-secondary)" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
         <input
@@ -96,20 +111,23 @@ export const Contacts: React.FC = () => {
                   </button>
                 </div>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                     <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)' }}>{person.name || 'Безименен'}</h3>
-                    {person.role && (
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', background: ROLE_COLORS[person.role]?.bg ?? '#f1f5f9', color: ROLE_COLORS[person.role]?.color ?? '#475569' }}>
-                        {person.role}
-                      </span>
-                    )}
+                    {families.filter(f => person.familyIds?.includes(f.id)).map(f => {
+                      const c = FAMILY_COLORS[f.color] ?? FAMILY_COLORS.blue;
+                      return (
+                        <span key={f.id} style={{ fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', background: c.bg, color: c.text, whiteSpace: 'nowrap' }}>
+                          {f.name}
+                        </span>
+                      );
+                    })}
                   </div>
                   {person.phone && <p style={{ margin: '4px 0 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{person.phone}</p>}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                 <button
-                  onClick={() => setEditData({ tab: 'person', id: person.id, name: person.name, phone: person.phone ?? '', email: person.email ?? '', role: person.role, birthDate: person.birthDate ?? '' })}
+                  onClick={() => setEditData({ tab: 'person', id: person.id, name: person.name, phone: person.phone ?? '', email: person.email ?? '', familyIds: person.familyIds, birthDate: person.birthDate ?? '' })}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: '8px', borderRadius: '8px' }}
                   title="Редактирай"
                 >
@@ -153,14 +171,148 @@ export const Contacts: React.FC = () => {
   );
 };
 
+const FamiliesPanel: React.FC<{
+  families: Family[];
+  activeFamily: string | null;
+  onFilter: (id: string | null) => void;
+  onAdd: (data: Pick<Family, 'name' | 'color'>) => Promise<boolean>;
+  onDelete: (id: string) => Promise<void>;
+}> = ({ families, activeFamily, onFilter, onAdd, onDelete }) => {
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newColor, setNewColor] = useState('blue');
+  const [saving, setSaving] = useState(false);
+
+  const handleAdd = async () => {
+    if (!newName.trim()) return;
+    setSaving(true);
+    await onAdd({ name: newName.trim(), color: newColor });
+    setSaving(false);
+    setNewName('');
+    setNewColor('blue');
+    setAdding(false);
+  };
+
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 }}>Семейства:</span>
+
+        <button
+          type="button"
+          onClick={() => onFilter(null)}
+          style={{ padding: '5px 14px', borderRadius: '20px', border: '1.5px solid', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, transition: 'var(--transition)', borderColor: activeFamily === null ? 'var(--accent-color)' : 'var(--panel-border)', background: activeFamily === null ? 'var(--accent-color)' : 'transparent', color: activeFamily === null ? '#fff' : 'var(--text-secondary)' }}
+        >
+          Всички
+        </button>
+
+        {families.map(f => {
+          const c = FAMILY_COLORS[f.color] ?? FAMILY_COLORS.blue;
+          const isActive = activeFamily === f.id;
+          return (
+            <div key={f.id} style={{ display: 'flex', alignItems: 'stretch' }}>
+              <button
+                type="button"
+                onClick={() => onFilter(isActive ? null : f.id)}
+                style={{ padding: '5px 12px', borderRadius: '20px 0 0 20px', border: '1.5px solid', borderRight: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, transition: 'var(--transition)', borderColor: isActive ? c.text : 'var(--panel-border)', background: isActive ? c.bg : 'transparent', color: isActive ? c.text : 'var(--text-primary)' }}
+              >
+                {f.name}
+              </button>
+              <button
+                type="button"
+                onClick={() => window.confirm(`Изтрий семейство „${f.name}"?`) && onDelete(f.id)}
+                title="Изтрий семейство"
+                style={{ padding: '5px 9px', borderRadius: '0 20px 20px 0', border: '1.5px solid', borderLeft: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, background: 'transparent', color: 'var(--text-secondary)', borderColor: isActive ? c.text : 'var(--panel-border)', transition: 'var(--transition)', lineHeight: 1 }}
+              >
+                ×
+              </button>
+            </div>
+          );
+        })}
+
+        {!adding && (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            style={{ padding: '5px 12px', borderRadius: '20px', border: '1.5px dashed var(--panel-border)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, background: 'transparent', color: 'var(--text-secondary)', transition: 'var(--transition)' }}
+          >
+            + Добави
+          </button>
+        )}
+      </div>
+
+      {adding && (
+        <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--bg-color)', borderRadius: '12px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <input
+            autoFocus
+            value={newName}
+            onChange={e => setNewName(e.target.value)}
+            placeholder="Например: Иванови, Петрови..."
+            onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setAdding(false); }}
+            style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--panel-border)', background: 'var(--panel-bg)', color: 'var(--text-primary)', fontSize: '0.95rem', outline: 'none' }}
+          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Цвят:</span>
+            {PALETTE_KEYS.map(key => {
+              const c = FAMILY_COLORS[key];
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setNewColor(key)}
+                  title={key}
+                  style={{ width: 26, height: 26, borderRadius: '50%', background: c.bg, border: newColor === key ? `3px solid ${c.text}` : '2px solid transparent', outline: newColor === key ? `2px solid ${c.text}` : 'none', outlineOffset: '2px', cursor: 'pointer', flexShrink: 0, transition: 'outline 0.15s' }}
+                />
+              );
+            })}
+          </div>
+          {newColor && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', borderRadius: '20px', background: FAMILY_COLORS[newColor].bg, color: FAMILY_COLORS[newColor].text, fontSize: '0.82rem', fontWeight: 700, alignSelf: 'flex-start' }}>
+              {newName || 'Преглед'}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={!newName.trim() || saving}
+              style={{ padding: '7px 18px', borderRadius: '8px', background: 'var(--accent-color)', color: '#fff', border: 'none', cursor: newName.trim() && !saving ? 'pointer' : 'not-allowed', fontWeight: 700, fontSize: '0.85rem', opacity: !newName.trim() || saving ? 0.6 : 1 }}
+            >
+              {saving ? 'Записва...' : 'Запази'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setAdding(false); setNewName(''); setNewColor('blue'); }}
+              style={{ padding: '7px 16px', borderRadius: '8px', background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--panel-border)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}
+            >
+              Отказ
+            </button>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+};
+
 const PersonDetail: React.FC<{ personId: string; onEdit: (d: EditData) => void }> = ({ personId, onEdit }) => {
-  const { events, routines, people, deleteEvent, deleteRoutine } = useData();
+  const { families, events, routines, people, updatePerson, deleteEvent, deleteRoutine } = useData();
   const { addToast } = useToast();
+  const [savingFamily, setSavingFamily] = useState<string | null>(null);
   const person = people.find((p: Person) => p.id === personId);
   const personEvents = events.filter((e: EventRecord) => e.personIds?.includes(personId));
   const personRoutines = routines.filter((r: Routine) => r.personIds?.includes(personId));
 
   if (!person) return null;
+
+  const toggleFamily = async (familyId: string) => {
+    const current = person.familyIds ?? [];
+    const next = current.includes(familyId)
+      ? current.filter(id => id !== familyId)
+      : [...current, familyId];
+    setSavingFamily(familyId);
+    await updatePerson(person.id, { familyIds: next });
+    setSavingFamily(null);
+  };
 
   const handleDeleteEvent = async (e: EventRecord) => {
     if (!window.confirm(`Изтрий "${e.type}"?`)) return;
@@ -176,6 +328,45 @@ const PersonDetail: React.FC<{ personId: string; onEdit: (d: EditData) => void }
 
   return (
     <Card className="animate-fade-in" style={{ marginTop: '1rem', borderTop: '4px solid var(--accent-color)' }} title={`Детайлен профил: ${person.name}`}>
+
+      {/* Family membership */}
+      <div style={{ marginTop: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--panel-border)' }}>
+        <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.75rem' }}>Семейства</h4>
+        {families.length === 0 ? (
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>Няма създадени семейства.</p>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {families.map(f => {
+              const active = person.familyIds?.includes(f.id) ?? false;
+              const c = FAMILY_COLORS[f.color] ?? FAMILY_COLORS.blue;
+              const loading = savingFamily === f.id;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => !loading && toggleFamily(f.id)}
+                  disabled={loading}
+                  style={{
+                    padding: '6px 16px',
+                    borderRadius: '20px',
+                    border: `1.5px solid ${active ? c.text : 'var(--panel-border)'}`,
+                    background: active ? c.bg : 'transparent',
+                    color: active ? c.text : 'var(--text-secondary)',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: loading ? 'wait' : 'pointer',
+                    opacity: loading ? 0.6 : 1,
+                    transition: 'var(--transition)',
+                  }}
+                >
+                  {loading ? '...' : (active ? `✓ ${f.name}` : f.name)}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
 
         <div>

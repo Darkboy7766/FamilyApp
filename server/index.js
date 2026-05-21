@@ -10,6 +10,7 @@ config({ path: join(__dirname, '../.env') });
 
 const TOKEN = process.env.BASEROW_TOKEN;
 const TABLE_IDS = {
+  families: process.env.BASEROW_TABLE_FAMILIES,  // optional until Baserow table is created
   people:   process.env.BASEROW_TABLE_PEOPLE,
   events:   process.env.BASEROW_TABLE_EVENTS,
   routines: process.env.BASEROW_TABLE_ROUTINES,
@@ -17,7 +18,8 @@ const TABLE_IDS = {
   expenses: process.env.BASEROW_TABLE_EXPENSES,
 };
 
-if (!TOKEN || Object.values(TABLE_IDS).some(v => !v)) {
+const requiredTables = ['people', 'events', 'routines', 'tasks', 'expenses'];
+if (!TOKEN || requiredTables.some(t => !TABLE_IDS[t])) {
   console.error('Грешка: Липсват BASEROW_TOKEN или BASEROW_TABLE_* в .env файла.');
   process.exit(1);
 }

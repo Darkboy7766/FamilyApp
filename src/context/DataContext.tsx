@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { Person, EventRecord, Routine, Task, Expense } from '../types';
+import type { Person, EventRecord, Routine, Task, Expense, Family } from '../types';
 import { baserowApi as airtableApi } from '../api/baserow';
 
 interface DataContextType {
+  families: Family[];
   people: Person[];
   events: EventRecord[];
   routines: Routine[];
@@ -12,16 +13,19 @@ interface DataContextType {
   loading: boolean;
   error: string | null;
   refreshData: () => Promise<void>;
+  addFamily: (data: Pick<Family, 'name' | 'color'>) => Promise<boolean>;
   addPerson: (data: Partial<Person>) => Promise<boolean>;
   addEvent: (data: Partial<EventRecord>) => Promise<boolean>;
   addRoutine: (data: Partial<Routine>) => Promise<boolean>;
   addTask: (data: Partial<Task>) => Promise<boolean>;
   addExpense: (data: Partial<Expense>) => Promise<boolean>;
+  updateFamily: (id: string, data: Partial<Pick<Family, 'name' | 'color'>>) => Promise<boolean>;
   updatePerson: (id: string, data: Partial<Person>) => Promise<boolean>;
   updateEvent: (id: string, data: Partial<EventRecord>) => Promise<boolean>;
   updateRoutine: (id: string, data: Partial<Routine>) => Promise<boolean>;
   updateTask: (id: string, data: Partial<Task>) => Promise<boolean>;
   updateExpense: (id: string, data: Partial<Expense>) => Promise<boolean>;
+  deleteFamily: (id: string) => Promise<boolean>;
   deletePerson: (id: string) => Promise<boolean>;
   deleteEvent: (id: string) => Promise<boolean>;
   deleteRoutine: (id: string) => Promise<boolean>;
@@ -32,6 +36,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [families, setFamilies]   = useState<Family[]>([]);
   const [people, setPeople]       = useState<Person[]>([]);
   const [events, setEvents]       = useState<EventRecord[]>([]);
   const [routines, setRoutines]   = useState<Routine[]>([]);
@@ -48,13 +53,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       setLoading(true);
       setError(null);
-      const [fetchedPeople, fetchedEvents, fetchedRoutines, fetchedTasks, fetchedExpenses] = await Promise.all([
+      const [fetchedFamilies, fetchedPeople, fetchedEvents, fetchedRoutines, fetchedTasks, fetchedExpenses] = await Promise.all([
+        airtableApi.fetchFamilies(),
         airtableApi.fetchPeople(),
         airtableApi.fetchEvents(),
         airtableApi.fetchRoutines(),
         airtableApi.fetchTasks(),
         airtableApi.fetchExpenses(),
       ]);
+      setFamilies(fetchedFamilies);
       setPeople(fetchedPeople);
       setEvents(fetchedEvents);
       setRoutines(fetchedRoutines);
@@ -71,6 +78,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => { refreshData(); }, []);
 
   // ── Create ──
+  const addFamily = async (data: Pick<Family, 'name' | 'color'>) => {
+    const r = await airtableApi.createFamily(data);
+    if (r) setFamilies(prev => [...prev, r]);
+    return !!r;
+  };
   const addPerson = async (data: Partial<Person>) => {
     const r = await airtableApi.createPerson(data);
     if (r) setPeople(prev => [...prev, r]);
@@ -98,6 +110,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // ── Update ──
+  const updateFamily = async (id: string, data: Partial<Pick<Family, 'name' | 'color'>>) => {
+    const ok = await airtableApi.updateFamily(id, data);
+    if (ok) setFamilies(prev => prev.map(f => f.id === id ? { ...f, ...data } : f));
+    return ok;
+  };
   const updatePerson = async (id: string, data: Partial<Person>) => {
     const ok = await airtableApi.updatePerson(id, data);
     if (ok) setPeople(prev => prev.map(p => p.id === id ? { ...p, ...data } : p));
@@ -125,6 +142,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // ── Delete ──
+  const deleteFamily = async (id: string) => {
+    const ok = await airtableApi.deleteFamily(id);
+    if (ok) setFamilies(prev => prev.filter(f => f.id !== id));
+    return ok;
+  };
   const deletePerson = async (id: string) => {
     const ok = await airtableApi.deletePerson(id);
     if (ok) setPeople(prev => prev.filter(p => p.id !== id));
@@ -153,10 +175,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <DataContext.Provider value={{
-      people, events, routines, tasks, expenses, loading, error, refreshData,
-      addPerson, addEvent, addRoutine, addTask, addExpense,
-      updatePerson, updateEvent, updateRoutine, updateTask, updateExpense,
-      deletePerson, deleteEvent, deleteRoutine, deleteTask, deleteExpense,
+      families, people, events, routines, tasks, expenses, loading, error, refreshData,
+      addFamily, addPerson, addEvent, addRoutine, addTask, addExpense,
+      updateFamily, updatePerson, updateEvent, updateRoutine, updateTask, updateExpense,
+      deleteFamily, deletePerson, deleteEvent, deleteRoutine, deleteTask, deleteExpense,
     }}>
       {children}
     </DataContext.Provider>

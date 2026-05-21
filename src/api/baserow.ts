@@ -1,4 +1,4 @@
-import type { Person, EventRecord, Routine, Task, Expense, FamilyRole } from '../types';
+import type { Person, EventRecord, Routine, Task, Expense, Family } from '../types';
 
 const BASE = '/api/baserow';
 const headers = { 'Content-Type': 'application/json' };
@@ -26,6 +26,17 @@ function fromIds(ids: string[]): number[] {
 }
 
 export const baserowApi = {
+  fetchFamilies: async (): Promise<Family[]> => {
+    try {
+      const rows = await fetchAllRows('families');
+      return rows.map((r: any) => ({
+        id: String(r.id),
+        name: r.Name || '',
+        color: r.Color || 'blue',
+      }));
+    } catch { return []; }
+  },
+
   fetchPeople: async (): Promise<Person[]> => {
     try {
       const rows = await fetchAllRows('people');
@@ -34,7 +45,7 @@ export const baserowApi = {
         name: r.Name || '',
         phone: r.Phone || '',
         email: r.Email || '',
-        role: (r.Role?.value as FamilyRole) || undefined,
+        familyIds: (r.Families || []).map((f: any) => String(f.id)),
         pin: r.PIN || '',
         photoUrl: Array.isArray(r.Photo) && r.Photo.length > 0 ? r.Photo[0].url : '',
         birthDate: r.BirthDate || undefined,
@@ -92,19 +103,28 @@ export const baserowApi = {
     } catch (e) { console.error(e); return []; }
   },
 
+  createFamily: async (data: Pick<Family, 'name' | 'color'>): Promise<Family | null> => {
+    try {
+      const res = await fetch(`${BASE}/families`, { method: 'POST', headers, body: JSON.stringify({ Name: data.name, Color: data.color }) });
+      if (!res.ok) { console.error(await res.json()); return null; }
+      const r = await res.json();
+      return { id: String(r.id), name: r.Name || data.name, color: r.Color || data.color };
+    } catch (e) { console.error(e); return null; }
+  },
+
   createPerson: async (data: Partial<Person>): Promise<Person | null> => {
     try {
       const body: any = {};
-      if (data.name)      body.Name      = data.name;
-      if (data.phone)     body.Phone     = data.phone;
-      if (data.email)     body.Email     = data.email;
-      if (data.role)      body.Role      = data.role;
-      if (data.pin)       body.PIN       = data.pin;
-      if (data.birthDate) body.BirthDate = data.birthDate;
+      if (data.name)             body.Name     = data.name;
+      if (data.phone)            body.Phone    = data.phone;
+      if (data.email)            body.Email    = data.email;
+      if (data.pin)              body.PIN      = data.pin;
+      if (data.birthDate)        body.BirthDate = data.birthDate;
+      if (data.familyIds?.length) body.Families = data.familyIds.map(id => Number(id));
       const res = await fetch(`${BASE}/people`, { method: 'POST', headers, body: JSON.stringify(body) });
       if (!res.ok) { console.error(await res.json()); return null; }
       const r = await res.json();
-      return { id: String(r.id), name: r.Name || data.name || '', phone: r.Phone || data.phone || '', email: r.Email || data.email || '', photoUrl: '', role: r.Role?.value || data.role, birthDate: r.BirthDate || data.birthDate };
+      return { id: String(r.id), name: r.Name || data.name || '', phone: r.Phone || data.phone || '', email: r.Email || data.email || '', photoUrl: '', familyIds: data.familyIds ?? [], birthDate: r.BirthDate || data.birthDate };
     } catch (e) { console.error(e); return null; }
   },
 
@@ -169,15 +189,26 @@ export const baserowApi = {
     } catch (e) { console.error(e); return null; }
   },
 
+  updateFamily: async (id: string, data: Partial<Pick<Family, 'name' | 'color'>>): Promise<boolean> => {
+    try {
+      const body: any = {};
+      if (data.name  !== undefined) body.Name  = data.name;
+      if (data.color !== undefined) body.Color = data.color;
+      const res = await fetch(`${BASE}/families/${id}`, { method: 'PATCH', headers, body: JSON.stringify(body) });
+      if (!res.ok) console.error(await res.json());
+      return res.ok;
+    } catch (e) { console.error(e); return false; }
+  },
+
   updatePerson: async (id: string, data: Partial<Person>): Promise<boolean> => {
     try {
       const body: any = {};
       if (data.name      !== undefined) body.Name      = data.name;
       if (data.phone     !== undefined) body.Phone     = data.phone;
       if (data.email     !== undefined) body.Email     = data.email;
-      if (data.role      !== undefined) body.Role      = data.role;
       if (data.pin       !== undefined) body.PIN       = data.pin;
       if (data.birthDate !== undefined) body.BirthDate = data.birthDate;
+      if (data.familyIds !== undefined) body.Families  = (data.familyIds || []).map(fid => Number(fid));
       const res = await fetch(`${BASE}/people/${id}`, { method: 'PATCH', headers, body: JSON.stringify(body) });
       if (!res.ok) console.error(await res.json());
       return res.ok;
@@ -234,6 +265,7 @@ export const baserowApi = {
     } catch (e) { console.error(e); return false; }
   },
 
+  deleteFamily:  async (id: string) => { try { return (await fetch(`${BASE}/families/${id}`, { method: 'DELETE', headers })).ok; } catch { return false; } },
   deletePerson:  async (id: string) => { try { return (await fetch(`${BASE}/people/${id}`,  { method: 'DELETE', headers })).ok; } catch { return false; } },
   deleteEvent:   async (id: string) => { try { return (await fetch(`${BASE}/events/${id}`,   { method: 'DELETE', headers })).ok; } catch { return false; } },
   deleteRoutine: async (id: string) => { try { return (await fetch(`${BASE}/routines/${id}`, { method: 'DELETE', headers })).ok; } catch { return false; } },

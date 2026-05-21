@@ -69,6 +69,7 @@ BASEROW_TABLE_EVENTS=
 BASEROW_TABLE_ROUTINES=
 BASEROW_TABLE_TASKS=
 BASEROW_TABLE_EXPENSES=
+BASEROW_TABLE_FAMILIES=    # Optional — add after creating the Families table in Baserow
 PORT=3001
 RESEND_API_KEY=            # Resend API key (re_...)
 EMAIL_FROM=                # Sender address; use "onboarding@resend.dev" without a verified domain
@@ -77,12 +78,13 @@ EMAIL_FROM=                # Sender address; use "onboarding@resend.dev" without
 ## Key types
 
 ```ts
-Person      { id, name, photoUrl?, phone?, email?, role?, pin? }
+Family      { id, name, color }                     // color = key from FAMILY_COLORS palette
+Person      { id, name, photoUrl?, phone?, email?, familyIds[]?, pin?, birthDate? }
 EventRecord { id, type, date, personIds[] }
 Routine     { id, medication, time, personIds[] }   // time = "HH:mm"
 Task        { id, title, done, dueDate?, personIds[]? }
 Expense     { id, amount, category, date, paidById? }
-FamilyRole  = 'Момче' | 'Момиче'
+FAMILY_COLORS = { blue, green, purple, orange, pink, red, teal, yellow }
 EXPENSE_CATEGORIES = ['Храна', 'Сметки', 'Здраве', 'Транспорт', 'Развлечение', 'Друго']
 ```
 

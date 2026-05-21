@@ -5,17 +5,15 @@ import { Button } from './ui/Button';
 import { useData } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
 import { useUser } from '../context/UserContext';
-import type { FamilyRole, ExpenseCategory } from '../types';
-import { EXPENSE_CATEGORIES } from '../types';
+import type { ExpenseCategory } from '../types';
+import { EXPENSE_CATEGORIES, FAMILY_COLORS } from '../types';
 
 export type EditData =
-  | { tab: 'person';  id: string; name: string; phone: string; email?: string; role?: FamilyRole; birthDate?: string }
+  | { tab: 'person';  id: string; name: string; phone: string; email?: string; familyIds?: string[]; birthDate?: string }
   | { tab: 'event';   id: string; eventType: string; eventDate: string; eventPersonIds: string[] }
   | { tab: 'routine'; id: string; medication: string; time: string; routinePersonId: string }
   | { tab: 'task';    id: string; title: string; dueDate: string; taskPersonId: string }
   | { tab: 'expense'; id: string; amount: number; category: string; date: string; paidById: string };
-
-const ROLES: FamilyRole[] = ['Момче', 'Момиче'];
 
 interface Props {
   isOpen: boolean;
@@ -25,7 +23,7 @@ interface Props {
 
 export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }) => {
   const isEdit = !!editData;
-  const { people, addPerson, addEvent, addRoutine, addTask, addExpense, updatePerson, updateEvent, updateRoutine, updateTask, updateExpense } = useData();
+  const { families, people, addPerson, addEvent, addRoutine, addTask, addExpense, updatePerson, updateEvent, updateRoutine, updateTask, updateExpense } = useData();
   const { addToast } = useToast();
   const { currentUser } = useUser();
   const [loading, setLoading] = useState(false);
@@ -34,7 +32,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
   const [name, setName]             = useState('');
   const [phone, setPhone]           = useState('');
   const [email, setEmail]           = useState('');
-  const [role, setRole]             = useState<FamilyRole | ''>('');
+  const [selectedFamilyIds, setSelectedFamilyIds] = useState<string[]>([]);
   const [pin, setPin]               = useState('');
   const [birthDate, setBirthDate]   = useState('');
   const [eventType, setEventType]   = useState('🎂 Рожден ден');
@@ -60,7 +58,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
         setName(editData.name);
         setPhone(editData.phone);
         setEmail(editData.email ?? '');
-        setRole(editData.role ?? '');
+        setSelectedFamilyIds(editData.familyIds ?? []);
         setBirthDate(editData.birthDate ?? '');
         setPin('');
       } else if (editData.tab === 'event') {
@@ -83,7 +81,7 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
       }
     } else {
       setTab('person');
-      setName(''); setPhone(''); setEmail(''); setRole(''); setPin(''); setBirthDate('');
+      setName(''); setPhone(''); setEmail(''); setSelectedFamilyIds([]); setPin(''); setBirthDate('');
       setEventType('🎂 Рожден ден'); setEventDate(''); setEventPersonIds([]);
       setMedication(''); setTime(''); setRoutinePerson('');
       setTaskTitle(''); setTaskDueDate(''); setTaskPerson(currentUser?.id ?? '');
@@ -98,8 +96,8 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
 
     if (tab === 'person') {
       success = isEdit
-        ? await updatePerson(editData!.id, { name, phone, email: email || undefined, role: role || undefined, pin: pin || undefined, birthDate: birthDate || undefined })
-        : await addPerson({ name, phone, email: email || undefined, role: role || undefined, pin: pin || undefined, birthDate: birthDate || undefined });
+        ? await updatePerson(editData!.id, { name, phone, email: email || undefined, familyIds: selectedFamilyIds, pin: pin || undefined, birthDate: birthDate || undefined })
+        : await addPerson({ name, phone, email: email || undefined, familyIds: selectedFamilyIds, pin: pin || undefined, birthDate: birthDate || undefined });
     } else if (tab === 'event') {
       const payload = { type: eventType, date: eventDate, personIds: eventPersonIds };
       success = isEdit
@@ -168,11 +166,27 @@ export const CreateEntityModal: React.FC<Props> = ({ isOpen, onClose, editData }
             <Input label="Имейл (за известия)" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="miki@example.com" />
             <Input label="Дата на раждане" type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} />
             <div>
-              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>Семейна роля</label>
-              <select style={selectStyle} value={role} onChange={e => setRole(e.target.value as FamilyRole | '')}>
-                <option value="">-- Без роля --</option>
-                {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-              </select>
+              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>Семейство</label>
+              {families.length === 0 ? (
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>Няма семейства — добави от Контакти.</p>
+              ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {families.map(f => {
+                    const active = selectedFamilyIds.includes(f.id);
+                    const c = FAMILY_COLORS[f.color] ?? FAMILY_COLORS.blue;
+                    return (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => setSelectedFamilyIds(active ? selectedFamilyIds.filter(id => id !== f.id) : [...selectedFamilyIds, f.id])}
+                        style={{ padding: '6px 14px', borderRadius: '20px', border: `1.5px solid ${active ? c.text : 'var(--panel-border)'}`, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, transition: 'var(--transition)', background: active ? c.bg : 'transparent', color: active ? c.text : 'var(--text-primary)' }}
+                      >
+                        {f.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <Input
               label={isEdit ? 'Нов PIN (4 цифри, остави празно за без промяна)' : 'PIN (4 цифри, незадължително)'}
