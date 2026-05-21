@@ -199,6 +199,13 @@ cron.schedule('0 8 * * *', () => {
 const app = express();
 app.use(express.json());
 
+// Temporary diagnostic — shows table IDs (no secrets)
+app.get('/api/debug-tables', (_req, res) => {
+  res.json(Object.fromEntries(
+    Object.entries(TABLE_IDS).map(([k, v]) => [k, v ? `${String(v).length} chars: "${v}"` : 'MISSING'])
+  ));
+});
+
 // Manual trigger with diagnostics
 app.post('/api/send-reminders', async (_req, res) => {
   if (!resend) return res.status(503).json({ error: 'RESEND_API_KEY не е конфигуриран.' });
