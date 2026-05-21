@@ -34,7 +34,7 @@ export const baserowApi = {
         name: r.Name || '',
         color: r.Color || 'blue',
       }));
-    } catch { return []; }
+    } catch (e) { console.error('fetchFamilies:', e); return []; }
   },
 
   fetchPeople: async (): Promise<Person[]> => {
