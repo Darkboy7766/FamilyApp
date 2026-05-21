@@ -8,15 +8,16 @@ import cron from 'node-cron';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: join(__dirname, '../.env') });
 
-const TOKEN = process.env.BASEROW_TOKEN;
+const TOKEN = process.env.BASEROW_TOKEN?.trim();
 const TABLE_IDS = {
-  families: process.env.BASEROW_TABLE_FAMILIES,  // optional until Baserow table is created
-  people:   process.env.BASEROW_TABLE_PEOPLE,
-  events:   process.env.BASEROW_TABLE_EVENTS,
-  routines: process.env.BASEROW_TABLE_ROUTINES,
-  tasks:    process.env.BASEROW_TABLE_TASKS,
-  expenses: process.env.BASEROW_TABLE_EXPENSES,
+  families: process.env.BASEROW_TABLE_FAMILIES?.trim(),
+  people:   process.env.BASEROW_TABLE_PEOPLE?.trim(),
+  events:   process.env.BASEROW_TABLE_EVENTS?.trim(),
+  routines: process.env.BASEROW_TABLE_ROUTINES?.trim(),
+  tasks:    process.env.BASEROW_TABLE_TASKS?.trim(),
+  expenses: process.env.BASEROW_TABLE_EXPENSES?.trim(),
 };
+console.log('[Config] TABLE_IDS:', JSON.stringify(TABLE_IDS));
 
 const requiredTables = ['people', 'events', 'routines', 'tasks', 'expenses'];
 if (!TOKEN || requiredTables.some(t => !TABLE_IDS[t])) {
@@ -258,8 +259,8 @@ app.all('/api/baserow/:table/:id', async (req, res) => {
     const data = text ? JSON.parse(text) : {};
     res.status(response.status).json(data);
   } catch (err) {
-    console.error('Proxy грешка:', err);
-    res.status(500).json({ error: 'Proxy error' });
+    console.error('Proxy грешка за', req.params.table, '→ tableId:', TABLE_IDS[req.params.table], '→', err.message);
+    res.status(500).json({ error: 'Proxy error', detail: err.message });
   }
 });
 
@@ -276,18 +277,17 @@ app.all('/api/baserow/:table', async (req, res) => {
     const data = await response.json();
     res.status(response.status).json(data);
   } catch (err) {
-    console.error('Proxy грешка:', err);
-    res.status(500).json({ error: 'Proxy error' });
+    console.error('Proxy грешка за', req.params.table, '→ tableId:', TABLE_IDS[req.params.table], '→', err.message);
+    res.status(500).json({ error: 'Proxy error', detail: err.message });
   }
 });
 
-if (process.env.NODE_ENV === 'production') {
-  const distPath = join(__dirname, '../dist');
-  app.use(express.static(distPath));
-  app.get('*', (_req, res) => {
-    res.sendFile(join(distPath, 'index.html'));
-  });
-}
+const distPath = join(__dirname, '../dist');
+app.use(express.static(distPath));
+app.get('*', (_req, res, next) => {
+  const indexPath = join(distPath, 'index.html');
+  res.sendFile(indexPath, err => { if (err) next(); });
+});
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
