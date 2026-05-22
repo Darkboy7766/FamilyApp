@@ -272,7 +272,11 @@ app.all('/api/baserow/:table', async (req, res) => {
   try {
     const body = ['POST', 'PATCH', 'PUT'].includes(req.method) ? JSON.stringify(req.body) : undefined;
     const response = await fetch(url, { method: req.method, headers: authHeader(), body });
-    const data = await response.json();
+    const text = await response.text();
+    if (!response.ok) {
+      console.error(`Baserow ${req.params.table} HTTP ${response.status}:`, text.substring(0, 300));
+    }
+    const data = text ? JSON.parse(text) : {};
     res.status(response.status).json(data);
   } catch (err) {
     console.error('Proxy грешка за', req.params.table, '→ tableId:', TABLE_IDS[req.params.table], '→', err.message);
@@ -282,7 +286,7 @@ app.all('/api/baserow/:table', async (req, res) => {
 
 const distPath = join(__dirname, '../dist');
 app.use(express.static(distPath));
-app.get('*', (_req, res, next) => {
+app.use((_req, res, next) => {
   const indexPath = join(distPath, 'index.html');
   res.sendFile(indexPath, err => { if (err) next(); });
 });
