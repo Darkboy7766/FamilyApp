@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Users, LayoutDashboard, Plus, CheckSquare, Wallet, Calendar as CalendarIcon, LogOut, User } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 import { Dashboard } from './pages/Dashboard';
 import { Contacts } from './pages/Contacts';
 import { Tasks } from './pages/Tasks';
@@ -143,6 +144,7 @@ function App() {
   return (
     <Router>
       <AppContent />
+      <Analytics />
     </Router>
   );
 }
