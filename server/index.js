@@ -8,14 +8,15 @@ import cron from 'node-cron';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: join(__dirname, '../.env') });
 
-const TOKEN = process.env.BASEROW_TOKEN?.trim();
+const clean = (v) => v?.trim().replace(/^["'`]+|["'`]+$/g, '');
+const TOKEN = clean(process.env.BASEROW_TOKEN);
 const TABLE_IDS = {
-  families: process.env.BASEROW_TABLE_FAMILIES?.trim(),
-  people:   process.env.BASEROW_TABLE_PEOPLE?.trim(),
-  events:   process.env.BASEROW_TABLE_EVENTS?.trim(),
-  routines: process.env.BASEROW_TABLE_ROUTINES?.trim(),
-  tasks:    process.env.BASEROW_TABLE_TASKS?.trim(),
-  expenses: process.env.BASEROW_TABLE_EXPENSES?.trim(),
+  families: clean(process.env.BASEROW_TABLE_FAMILIES),
+  people:   clean(process.env.BASEROW_TABLE_PEOPLE),
+  events:   clean(process.env.BASEROW_TABLE_EVENTS),
+  routines: clean(process.env.BASEROW_TABLE_ROUTINES),
+  tasks:    clean(process.env.BASEROW_TABLE_TASKS),
+  expenses: clean(process.env.BASEROW_TABLE_EXPENSES),
 };
 const requiredTables = ['people', 'events', 'routines', 'tasks', 'expenses'];
 if (!TOKEN || requiredTables.some(t => !TABLE_IDS[t])) {
@@ -196,6 +197,13 @@ cron.schedule('0 8 * * *', () => {
 // ── Express ──
 const app = express();
 app.use(express.json());
+
+// Temporary debug — shows raw env var info (no token values)
+app.get('/api/debug-env', (_req, res) => {
+  res.json(Object.fromEntries(
+    Object.entries(TABLE_IDS).map(([k, v]) => [k, v ? `len=${v.length} val="${v}"` : 'MISSING'])
+  ));
+});
 
 // Manual trigger with diagnostics
 app.post('/api/send-reminders', async (_req, res) => {
