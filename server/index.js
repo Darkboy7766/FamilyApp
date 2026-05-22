@@ -198,13 +198,6 @@ cron.schedule('0 8 * * *', () => {
 const app = express();
 app.use(express.json());
 
-// Temporary debug — shows raw env var info (no token values)
-app.get('/api/debug-env', (_req, res) => {
-  res.json(Object.fromEntries(
-    Object.entries(TABLE_IDS).map(([k, v]) => [k, v ? `len=${v.length} val="${v}"` : 'MISSING'])
-  ));
-});
-
 // Manual trigger with diagnostics
 app.post('/api/send-reminders', async (_req, res) => {
   if (!resend) return res.status(503).json({ error: 'RESEND_API_KEY не е конфигуриран.' });
