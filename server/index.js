@@ -299,12 +299,16 @@ app.use((_req, res, next) => {
   res.sendFile(indexPath, err => { if (err) next(); });
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`API прокси работи на http://localhost:${PORT}`);
-  if (resend) {
-    console.log(`[Resend] Активен — дневни напомняния в 08:00 (Sofia)`);
-  } else {
-    console.log(`[Resend] Неактивен — добави RESEND_API_KEY в .env`);
-  }
-});
+export default app;
+
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, () => {
+    console.log(`API прокси работи на http://localhost:${PORT}`);
+    if (resend) {
+      console.log(`[Resend] Активен — дневни напомняния в 08:00 (Sofia)`);
+    } else {
+      console.log(`[Resend] Неактивен — добави RESEND_API_KEY в .env`);
+    }
+  });
+}
