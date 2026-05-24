@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
 import { Card } from '../components/ui/Card';
@@ -19,6 +19,13 @@ export const Contacts: React.FC = () => {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetId = useRef<string | null>(null);
+  const detailRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedPerson && detailRef.current) {
+      detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedPerson]);
 
   const triggerUpload = (personId: string) => {
     uploadTargetId.current = personId;
@@ -149,7 +156,9 @@ export const Contacts: React.FC = () => {
       </div>
 
       {selectedPerson && (
-        <PersonDetail personId={selectedPerson} onEdit={setEditData} />
+        <div ref={detailRef}>
+          <PersonDetail personId={selectedPerson} onEdit={setEditData} />
+        </div>
       )}
 
       <input
