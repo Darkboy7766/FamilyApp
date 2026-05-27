@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
+import { useToast } from '../context/ToastContext';
 import { Card } from '../components/ui/Card';
+import { CreateEntityModal } from '../components/CreateEntityModal';
+import type { EditData } from '../components/CreateEntityModal';
 import type { EventRecord } from '../types';
 import {
   startOfMonth, endOfMonth, eachDayOfInterval,
@@ -8,7 +11,7 @@ import {
   addMonths, subMonths, parseISO, format, getDay,
 } from 'date-fns';
 import { bg } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2 } from 'lucide-react';
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
 
@@ -28,8 +31,10 @@ function colorFor(str: string) {
 }
 
 export const Calendar: React.FC = () => {
-  const { events, people, loading } = useData();
-  const [viewDate, setViewDate] = React.useState(() => new Date());
+  const { events, people, loading, deleteEvent } = useData();
+  const { addToast } = useToast();
+  const [viewDate, setViewDate] = useState(() => new Date());
+  const [editData, setEditData] = useState<EditData | undefined>();
 
   if (loading) return (
     <div className="animate-fade-in" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
@@ -202,12 +207,38 @@ export const Calendar: React.FC = () => {
                     <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.type}</div>
                     {names && <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{names}</div>}
                   </div>
+                  <div style={{ display: 'flex', gap: '2px', flexShrink: 0 }}>
+                    <button
+                      onClick={() => setEditData({ tab: 'event', id: e.id, eventType: e.type, eventDate: e.date ?? '', eventPersonIds: e.personIds ?? [] })}
+                      title="Редактирай"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: '6px', borderRadius: '8px' }}
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!window.confirm(`Изтрий „${e.type}"?`)) return;
+                        const ok = await deleteEvent(e.id);
+                        if (!ok) addToast('Грешка при изтриване.', 'error');
+                      }}
+                      title="Изтрий"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger-color)', display: 'flex', padding: '6px', borderRadius: '8px' }}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </div>
               );
             })}
           </div>
         </Card>
       )}
+
+      <CreateEntityModal
+        isOpen={!!editData}
+        onClose={() => setEditData(undefined)}
+        editData={editData}
+      />
 
     </div>
   );
