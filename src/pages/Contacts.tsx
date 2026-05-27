@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
 import { Card } from '../components/ui/Card';
-import { User, Trash2, Pencil, Search, Camera } from 'lucide-react';
+import { User, Trash2, Pencil, Search, Camera, Phone, Mail, Cake } from 'lucide-react';
 import type { Person, EventRecord, Routine, Family } from '../types';
 import { FAMILY_COLORS, PALETTE_KEYS } from '../types';
 import { CreateEntityModal } from '../components/CreateEntityModal';
@@ -335,8 +335,37 @@ const PersonDetail: React.FC<{ personId: string; onEdit: (d: EditData) => void }
     if (!ok) addToast('Грешка при изтриване.', 'error');
   };
 
+  const formatDate = (iso: string) => {
+    const [year, month, day] = iso.split('-');
+    return `${day}.${month}.${year} г.`;
+  };
+
   return (
     <Card className="animate-fade-in" style={{ marginTop: '1rem', borderTop: '4px solid var(--accent-color)' }} title={`Детайлен профил: ${person.name}`}>
+
+      {/* Contact info */}
+      {(person.phone || person.email || person.birthDate) && (
+        <div style={{ marginTop: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--panel-border)', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+          {person.phone && (
+            <a href={`tel:${person.phone}`} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-color)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500 }}>
+              <Phone size={16} />
+              {person.phone}
+            </a>
+          )}
+          {person.email && (
+            <a href={`mailto:${person.email}`} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-color)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500 }}>
+              <Mail size={16} />
+              {person.email}
+            </a>
+          )}
+          {person.birthDate && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)', fontSize: '0.95rem', fontWeight: 500 }}>
+              <Cake size={16} />
+              {formatDate(person.birthDate)}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Family membership */}
       <div style={{ marginTop: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--panel-border)' }}>
