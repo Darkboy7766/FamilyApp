@@ -71,18 +71,19 @@ function formatDate(dateStr) {
 }
 
 // ── Email HTML builder ──
-function buildEmailHTML({ name, eventRows, taskRows, routineRows }) {
+function buildEmailHTML({ name, birthdayRows = [], eventRows, taskRows, routineRows }) {
   const section = (title, icon, items) => items.length === 0 ? '' : `
     <h3 style="margin:24px 0 8px;color:#0f172a;font-size:1rem;">${icon} ${title}</h3>
     <ul style="margin:0;padding-left:20px;color:#334155;line-height:1.8;">
       ${items.map(i => `<li>${i}</li>`).join('')}
     </ul>`;
 
-  const eventsHtml   = section('Предстоящи събития', '📅', eventRows);
-  const tasksHtml    = section('Задачи за днес', '✅', taskRows);
-  const routinesHtml = section('Рутини за днес', '🔔', routineRows);
+  const birthdaysHtml = section('Рождени дни', '🎂', birthdayRows);
+  const eventsHtml    = section('Предстоящи събития', '📅', eventRows);
+  const tasksHtml     = section('Задачи за днес', '✅', taskRows);
+  const routinesHtml  = section('Рутини за днес', '🔔', routineRows);
 
-  if (!eventsHtml && !tasksHtml && !routinesHtml) return null;
+  if (!birthdaysHtml && !eventsHtml && !tasksHtml && !routinesHtml) return null;
 
   return `<!DOCTYPE html>
 <html lang="bg">
@@ -95,7 +96,7 @@ function buildEmailHTML({ name, eventRows, taskRows, routineRows }) {
     </div>
     <div style="padding:24px 28px;">
       <p style="margin:0 0 8px;color:#64748b;font-size:.9rem;">Ето напомнянията ти за днес, <strong>${new Date().toLocaleDateString('bg-BG', { weekday:'long', day:'numeric', month:'long' })}</strong>:</p>
-      ${eventsHtml}${tasksHtml}${routinesHtml}
+      ${birthdaysHtml}${eventsHtml}${tasksHtml}${routinesHtml}
       <hr style="border:none;border-top:1px solid #e2e8f0;margin:28px 0 16px;">
       <p style="margin:0;color:#94a3b8;font-size:.78rem;">Това е автоматично съобщение от Family CRM.</p>
     </div>
@@ -141,12 +142,34 @@ async function sendDailyReminders() {
     return false;
   });
 
+  // Рождени дни от BirthDate полето в People — показват се на ВСИЧКИ
+  const upcomingBirthdays = [];
+  for (const r of peopleRows) {
+    if (!r.BirthDate) continue;
+    const bMMdd = mmdd(r.BirthDate);
+    for (let i = 0; i <= 2; i++) {          // днес (0) + следващите 2 дни
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      if (mmdd(yyyymmdd(d)) === bMMdd) {
+        upcomingBirthdays.push({ name: r.Name || 'Непознат', daysUntil: i });
+        break;
+      }
+    }
+  }
+  console.log(`[Reminders] Предстоящи рождени дни: ${upcomingBirthdays.length}`);
+
   const dueTasks = taskRows.filter(t => !t.Done && t.DueDate === todayStr);
 
   let sent = 0;
   let noContent = 0;
 
   for (const person of people) {
+    // Рождени дни — еднакви за всички получатели
+    const birthdayRows = upcomingBirthdays.map(b => {
+      const when = b.daysUntil === 0 ? 'днес' : b.daysUntil === 1 ? 'утре' : `след ${b.daysUntil} дни`;
+      return `🎂 <strong>${b.name}</strong> има рожден ден <strong>${when}</strong>!`;
+    });
+
     const myEvents = upcomingEvents.filter(e => {
       const ids = (e.People || []).map(p => String(p.id));
       return ids.length === 0 || ids.includes(person.id);
@@ -160,10 +183,11 @@ async function sendDailyReminders() {
       return ids.includes(person.id);
     });
 
-    console.log(`[Resend] ${person.name}: ${myEvents.length} събитие(я), ${myTasks.length} задача(и), ${myRoutines.length} рутина(и)`);
+    console.log(`[Resend] ${person.name}: ${birthdayRows.length} рожден(и) ден(я), ${myEvents.length} събитие(я), ${myTasks.length} задача(и), ${myRoutines.length} рутина(и)`);
 
     const html = buildEmailHTML({
       name: person.name,
+      birthdayRows,
       eventRows:   myEvents.map(e => `<strong>${e.Name}</strong> — ${formatDate(e.Date)}`),
       taskRows:    myTasks.map(t => t.Title || ''),
       routineRows: myRoutines.map(r => `${r.Medication || ''} в ${r.Time || ''}`),
