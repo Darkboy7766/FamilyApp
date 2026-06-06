@@ -134,7 +134,7 @@ async function sendDailyReminders() {
   const upcomingEvents = eventRows.filter(e => {
     if (!e.Date) return false;
     const evMMdd = mmdd(e.Date);
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 0; i <= 3; i++) {
       const d = new Date(today);
       d.setDate(d.getDate() + i);
       if (mmdd(yyyymmdd(d)) === evMMdd) return true;
