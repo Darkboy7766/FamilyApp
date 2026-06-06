@@ -24,7 +24,12 @@ export default defineConfig({
           { src: '/app-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
         ],
       },
+      devOptions: {
+        enabled: false,
+      },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         runtimeCaching: [
           {
