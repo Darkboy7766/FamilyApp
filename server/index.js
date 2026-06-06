@@ -222,6 +222,21 @@ cron.schedule('0 8 * * *', () => {
 const app = express();
 app.use(express.json());
 
+// Vercel Cron Job — извиква се автоматично всеки ден в 08:00 Sofia (05:00 UTC)
+app.get('/api/cron/daily-reminders', async (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  if (secret && req.headers.authorization !== `Bearer ${secret}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const result = await sendDailyReminders();
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 // Manual trigger with diagnostics
 app.post('/api/send-reminders', async (_req, res) => {
   if (!resend) return res.status(503).json({ error: 'RESEND_API_KEY не е конфигуриран.' });
