@@ -11,7 +11,13 @@
       "Bash(npx tsc *)",
       "Bash(Remove-Item *)",
       "Bash(node server/index.js)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(claude update *)",
+      "Bash(npm run *)",
+      "Bash(python3 -c ' *)",
+      "Bash(node -e ' *)",
+      "Bash(npx --yes playwright --version)",
+      "Bash(node pw_test.js)"
     ]
   }
 }

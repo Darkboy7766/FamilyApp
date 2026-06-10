@@ -11,7 +11,8 @@ import {
   addMonths, subMonths, parseISO, format, getDay,
 } from 'date-fns';
 import { bg } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Cake } from 'lucide-react';
+import type { Person } from '../types';
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
 
@@ -67,6 +68,20 @@ export const Calendar: React.FC = () => {
     return eventsByMonthDay[key] ?? [];
   };
 
+  // Map: "MM-DD" → people having a birthday that day (recurs every year)
+  const birthdaysByMonthDay: Record<string, Person[]> = {};
+  for (const p of people) {
+    if (!p.birthDate) continue;
+    const key = p.birthDate.slice(5, 10); // "MM-DD"
+    if (key.length !== 5) continue;
+    (birthdaysByMonthDay[key] ??= []).push(p);
+  }
+
+  const birthdaysForDay = (day: Date): Person[] => {
+    const key = `${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+    return birthdaysByMonthDay[key] ?? [];
+  };
+
   const monthLabel = format(viewDate, 'MMMM yyyy', { locale: bg });
 
   // Upcoming events in this month for the sidebar list
@@ -81,6 +96,12 @@ export const Calendar: React.FC = () => {
     const db = parseISO(b.date!).getDate();
     return da - db;
   });
+
+  // Birthdays in this month for the sidebar list
+  const thisMonthBirthdays = people.filter(p => {
+    if (!p.birthDate) return false;
+    return Number(p.birthDate.slice(5, 7)) - 1 === viewDate.getMonth();
+  }).sort((a, b) => Number(a.birthDate!.slice(8, 10)) - Number(b.birthDate!.slice(8, 10)));
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', paddingBottom: '1rem' }}>
@@ -122,9 +143,11 @@ export const Calendar: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px' }}>
           {days.map(day => {
             const dayEvents = eventsForDay(day);
+            const dayBirthdays = birthdaysForDay(day);
             const inMonth   = isSameMonth(day, viewDate);
             const today     = isToday(day);
             const isSun     = getDay(day) === 0;
+            const visibleSlots = 2;
 
             return (
               <div
@@ -150,7 +173,31 @@ export const Calendar: React.FC = () => {
                   {format(day, 'd')}
                 </span>
 
-                {dayEvents.slice(0, 2).map(e => {
+                {dayBirthdays.slice(0, visibleSlots).map(p => (
+                  <div
+                    key={`b-${p.id}`}
+                    title={`Рожден ден: ${p.name}`}
+                    style={{
+                      background: today ? 'rgba(255,255,255,0.25)' : '#fce7f3',
+                      color: today ? '#fff' : '#be185d',
+                      fontSize: '0.62rem',
+                      fontWeight: 700,
+                      padding: '1px 4px',
+                      borderRadius: '4px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      lineHeight: 1.4,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '2px',
+                    }}
+                  >
+                    <Cake size={9} /> {p.name}
+                  </div>
+                ))}
+
+                {dayEvents.slice(0, Math.max(0, visibleSlots - dayBirthdays.length)).map(e => {
                   const col = colorFor(e.type);
                   return (
                     <div
@@ -174,9 +221,9 @@ export const Calendar: React.FC = () => {
                   );
                 })}
 
-                {dayEvents.length > 2 && (
+                {(dayBirthdays.length + dayEvents.length) > visibleSlots && (
                   <div style={{ fontSize: '0.6rem', fontWeight: 700, color: today ? 'rgba(255,255,255,0.8)' : 'var(--text-secondary)', paddingLeft: '2px' }}>
-                    +{dayEvents.length - 2}
+                    +{dayBirthdays.length + dayEvents.length - visibleSlots}
                   </div>
                 )}
               </div>
@@ -184,6 +231,33 @@ export const Calendar: React.FC = () => {
           })}
         </div>
       </Card>
+
+      {/* ── Birthdays this month ── */}
+      {thisMonthBirthdays.length > 0 && (
+        <Card variant="white" title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Cake size={18} color="var(--accent-color)" />
+            <span style={{ textTransform: 'capitalize' }}>{format(viewDate, 'MMMM', { locale: bg })} — рождени дни</span>
+          </div>
+        }>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {thisMonthBirthdays.map(p => {
+              const day = Number(p.birthDate!.slice(8, 10));
+              return (
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 1rem', background: '#f8fafc', borderRadius: '12px' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#fce7f3', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 800, fontSize: '0.9rem', color: '#be185d' }}>
+                    {day}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Рожден ден</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       {/* ── Events list for this month ── */}
       {thisMonthEvents.length > 0 && (

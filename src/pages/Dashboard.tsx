@@ -9,10 +9,11 @@ import { format, parseISO, addDays, isWithinInterval, startOfDay, isToday, isPas
 import { bg } from 'date-fns/locale';
 import {
   Calendar, HeartPulse, Coffee, Trash2, Pencil,
-  User, CheckSquare, Users, ArrowRight,
+  User, CheckSquare, Users, ArrowRight, Cake,
 } from 'lucide-react';
 import { CreateEntityModal } from '../components/CreateEntityModal';
 import type { EditData } from '../components/CreateEntityModal';
+import { getUpcomingBirthdays } from '../utils/birthdays';
 
 export const Dashboard: React.FC = () => {
   const { events, routines, tasks, people, loading, updateTask, deleteEvent, deleteRoutine } = useData();
@@ -61,6 +62,8 @@ export const Dashboard: React.FC = () => {
   const todayRoutines = [...routines].sort((a: Routine, b: Routine) =>
     (a.time || '').localeCompare(b.time || '')
   );
+
+  const upcomingBirthdays = getUpcomingBirthdays(people, now, 30);
 
   const getPersonNames = (ids?: string[]) => {
     if (!ids || ids.length === 0) return '';
@@ -175,6 +178,32 @@ export const Dashboard: React.FC = () => {
             }
           </div>
         </Card>
+
+        {/* ── Upcoming birthdays ── */}
+        {upcomingBirthdays.length > 0 && (
+          <Card variant="white" title={
+            <div className="flex-center" style={{ gap: '0.5rem', justifyContent: 'flex-start' }}>
+              <Cake size={18} color="var(--accent-color)" />
+              Рождени Дни
+            </div>
+          }>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+              {upcomingBirthdays.map(({ person, daysLeft }) => (
+                <div key={person.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '14px' }}>
+                  <div style={{ background: 'var(--card-pink)', width: 38, height: 38, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Cake size={18} color="#f43f5e" />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.name}</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                      {daysLeft === 0 ? 'Днес!' : daysLeft === 1 ? 'Утре' : `след ${daysLeft} дни`}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
 
         {/* ── All routines ── */}
         {routines.length > 0 && (
