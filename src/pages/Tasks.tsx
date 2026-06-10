@@ -128,10 +128,6 @@ export const Tasks: React.FC = () => {
           <p style={{ fontSize: '0.85rem', margin: 0 }}>
             Натисни + за да добавиш.{' '}
             <br />
-            <span style={{ fontSize: '0.78rem' }}>
-              Нужна таблица в Airtable: <strong>Задачи</strong> с полета{' '}
-              <strong>Заглавие</strong>, <strong>Изпълнено</strong> (checkbox), <strong>Краен срок</strong> (date), <strong>Човек</strong> (link).
-            </span>
           </p>
         </div>
       )}
